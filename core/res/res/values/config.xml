@@ -1071,4 +1071,6 @@
          it is disabled by default so devices need to add an overlay to enable-->
     <string name="config_fastChargePath" translatable="false"></string>
 
+    <!-- True if the Sym key should open the InputMethodPicker (default) -->
+    <bool name="config_symKeyShowsImePicker">true</bool>
 </resources>
