@@ -124,6 +124,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.stericsson.hardware.fm.IFmReceiver;
+import com.stericsson.hardware.fm.IFmTransmitter;
+import com.stericsson.hardware.fm.FmReceiver;
+import com.stericsson.hardware.fm.FmTransmitter;
+import com.stericsson.hardware.fm.FmReceiverImpl;
+import com.stericsson.hardware.fm.FmTransmitterImpl;
+
 class ReceiverRestrictedContext extends ContextWrapper {
     ReceiverRestrictedContext(Context base) {
         super(base);
@@ -545,6 +552,28 @@ class ContextImpl extends Context {
                     final Context outerContext = ctx.getOuterContext();
                     return new ProfileManager (outerContext, ctx.mMainThread.getHandler());
                 }});
+<<<<<<< HEAD
+=======
+
+        registerService(WimaxManagerConstants.WIMAX_SERVICE, new ServiceFetcher() {
+                public Object createService(ContextImpl ctx) {
+                    return WimaxHelper.createWimaxService(ctx, ctx.mMainThread.getHandler());
+                }});
+
+        registerService("fm_receiver", new ServiceFetcher() {
+                public Object createService(ContextImpl ctx) {
+                    IBinder b = ServiceManager.getService("fm_receiver");
+                    IFmReceiver service = IFmReceiver.Stub.asInterface(b);
+                    return new FmReceiverImpl(service);
+                }});
+
+        registerService("fm_transmitter", new ServiceFetcher() {
+                public Object createService(ContextImpl ctx) {
+                    IBinder b = ServiceManager.getService("fm_transmitter");
+                    IFmTransmitter service = IFmTransmitter.Stub.asInterface(b);
+                    return new FmTransmitterImpl(service);
+                }});
+>>>>>>> 44f2f8d... FM Radio: Add support for FM Radio in Android
     }
 
     static ContextImpl getImpl(Context context) {
