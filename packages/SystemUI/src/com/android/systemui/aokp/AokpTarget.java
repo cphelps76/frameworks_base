@@ -92,8 +92,8 @@ public class AokpTarget {
     public final static String ACTION_ALARM = "**alarm**";
     public final static String ACTION_TODAY = "**today**";
     public final static String ACTION_CLOCKOPTIONS = "**clockoptions**";
-	public final static String ACTION_VOICEASSIST = "**voiceassist**";
-	public final static String ACTION_TORCH = "**torch**";
+    public final static String ACTION_VOICEASSIST = "**voiceassist**";
+    public final static String ACTION_TORCH = "**torch**";
     public final static String ACTION_NULL = "**null**";
 
     private int mInjectKeyCode;
