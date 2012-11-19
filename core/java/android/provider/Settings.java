@@ -3130,12 +3130,6 @@ public final class Settings {
         };
 
        /**
-        * Key to store Torch state.
-        * @hide 
-        */
-        public static final String TORCH_STATE = "torch_state";
-
-       /**
         * Lefty mode
         * @hide
         */
