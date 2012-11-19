@@ -3063,6 +3063,7 @@ public final class Settings {
          * Whether to unlock the screen with the home key.  The value is boolean (1 or 0).
          * @hide
          */
+
         public static final String HOME_UNLOCK_SCREEN = "home_unlock_screen";
 
         /**
