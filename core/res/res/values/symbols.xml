@@ -1838,6 +1838,7 @@
   <eat-comment />
 
   <!-- Config.xml entries -->
+<<<<<<< HEAD
   <java-symbol type="bool" name="config_hasRotationLockSwitch" />
   <java-symbol type="integer" name="config_backKillTimeout" />
   <java-symbol type="bool" name="config_show_cmIMESwitcher"/>
@@ -1933,5 +1934,8 @@
   <java-symbol type="string" name="action_camera"/>
   <java-symbol type="string" name="action_null"/>
   <java-symbol type="string" name="action_app"/>
+
+   <!-- Config.xml entries -->
+  <java-symbol type="bool" name="config_samsung_stk" />
 
 </resources>
