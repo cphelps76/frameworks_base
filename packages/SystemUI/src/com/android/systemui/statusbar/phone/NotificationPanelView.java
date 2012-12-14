@@ -36,6 +36,7 @@ public class NotificationPanelView extends PanelView {
     private static final float STATUS_BAR_SWIPE_TRIGGER_PERCENTAGE = 0.05f;
     private static final float STATUS_BAR_SWIPE_VERTICAL_MAX_PERCENTAGE = 0.025f;
     private static final float STATUS_BAR_SWIPE_MOVE_PERCENTAGE = 0.2f;
+    private static final float STATUS_BAR_SETTINGS_FLIP_PERCENTAGE = 0.3f;
 
     private Drawable mHandleBar;
     private float mHandleBarHeight;
@@ -118,8 +119,12 @@ public class NotificationPanelView extends PanelView {
                         // Pointer is at the handle portion of the view?
                         mGestureStartY > getHeight() - mHandleBarHeight - getPaddingBottom();
                     mOkToFlip = getExpandedHeight() == 0;
-                    if (mStatusBar.skipToSettingsPanel()) {	  	
-                         flip = true;	  	
+                    if(mStatusBar.skipToSettingsPanel()) {
+                        flip = true;
+                    } else if (event.getX(0) > getWidth() * (1.0f - STATUS_BAR_SETTINGS_FLIP_PERCENTAGE) && {
+                            Settings.System.getInt(getContext().getContentResolver(),
+                                    Settings.System.QS_QUICK_PULLDOWN, 0) != 0) {
+                        flip = true;
                     }
                     break;
                 case MotionEvent.ACTION_MOVE:
@@ -210,6 +215,11 @@ public class NotificationPanelView extends PanelView {
         final boolean result = mHandleView.dispatchTouchEvent(event);
         if (shouldRecycleEvent) {
             event.recycle();
+                        mStatusBar.flipToSettings();
+                    }
+                    mOkToFlip = false;
+                }
+            }
         }
         return result;
     }
