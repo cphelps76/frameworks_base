@@ -80,8 +80,7 @@
                     android:layout_width="@dimen/navigation_menu_key_width"
                     android:layout_height="match_parent"
                     android:src="@drawable/ic_sysbar_menu"
-                    systemui:keyCode="82"
-                    android:visibility="invisible"
+                    systemui:keyCode="5"
                     android:contentDescription="@string/accessibility_menu"
                     systemui:glowBackground="@drawable/ic_sysbar_highlight"
                     />
