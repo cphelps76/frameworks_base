@@ -2637,6 +2637,14 @@ public final class Settings {
         public static final String POINTER_SPEED = "pointer_speed";
 
         /**
+         * Control the display of the action overflow button within app UI.
+         * 0 = use system default
+         * 1 = force on
+         * @hide
+         */
+        public static final String UI_FORCE_OVERFLOW_BUTTON = "ui_force_overflow_button";
+ 
+       /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
