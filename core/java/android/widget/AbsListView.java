@@ -819,7 +819,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         mTouchSlop = configuration.getScaledTouchSlop();
         mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
-        mDecacheThreshold = mMaximumVelocity / 2;
+        mDecacheThreshold = mMaximumVelocity / 2);
         mOverscrollDistance = configuration.getScaledOverscrollDistance();
         mOverflingDistance = configuration.getScaledOverflingDistance();
 
@@ -3923,7 +3923,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                     // Keep the fling alive a little longer
                     postDelayed(this, FLYWHEEL_TIMEOUT);
                 } else {
-                    endFling(false); // Don't disable the scrolling cache right after it was enabled
+                    endFling(); // This stops the previous fling. Clear cache
                     mTouchMode = TOUCH_MODE_SCROLL;
                     reportScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
                 }
@@ -3937,11 +3937,14 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         }
 
         void start(int initialVelocity) {
+<<<<<<< HEAD
             if (Math.abs(initialVelocity) > mDecacheThreshold) {
                 // For long flings, scrolling cache causes stutter, so don't use it
                 clearScrollingCache();
             }
 
+=======
+>>>>>>> 6eedf6c... REVISIT: remove some lag launching apps and improve scrolling
             int initialY = initialVelocity < 0 ? Integer.MAX_VALUE : 0;
             mLastFlingY = initialY;
             mScroller.setInterpolator(null);
@@ -4014,18 +4017,20 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         }
 
         void endFling() {
+<<<<<<< HEAD
             endFling(true);
         }
 
         void endFling(boolean clearCache) {
+=======
+>>>>>>> 6eedf6c... REVISIT: remove some lag launching apps and improve scrolling
             mTouchMode = TOUCH_MODE_REST;
 
             removeCallbacks(this);
             removeCallbacks(mCheckFlywheel);
 
             reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
-            if (clearCache)
-                clearScrollingCache();
+            clearScrollingCache();
             mScroller.abortAnimation();
 
             if (mFlingStrictSpan != null) {
