@@ -330,18 +330,9 @@ final class ActivityStack {
                     int pid = -1;
                     long pauseTime = 0;
                     String m = null;
-<<<<<<< HEAD
-                    synchronized (mService) {
-                        if (r.app != null) {
-                            pid = r.app.pid;
-                        }
-                        pauseTime = r.pauseTime;
-                        m = "pausing " + r;
-=======
                     //no need to synchronize this on mService
                     if (r.app != null) {
                        pid = r.app.pid;
->>>>>>> 6eedf6c... REVISIT: remove some lag launching apps and improve scrolling
                     }
                     pauseTime = r.pauseTime;
                     m = "pausing " + r;
@@ -372,20 +363,10 @@ final class ActivityStack {
                     int pid = -1;
                     long launchTickTime = 0;
                     String m = null;
-<<<<<<< HEAD
-                    synchronized (mService) {
-                        if (r.continueLaunchTickingLocked()) {
-                            if (r.app != null) {
-                                pid = r.app.pid;
-                            }
-                            launchTickTime = r.launchTickTime;
-                            m = "launching " + r;
-=======
                     //no need to synchronize this on mService
                     if (r.continueLaunchTickingLocked()) {
                        if (r.app != null) {
                             pid = r.app.pid;
->>>>>>> 6eedf6c... REVISIT: remove some lag launching apps and improve scrolling
                         }
                         launchTickTime = r.launchTickTime;
                         m = "launching " + r;
