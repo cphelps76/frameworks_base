@@ -118,6 +118,9 @@ public class NotificationPanelView extends PanelView {
                         // Pointer is at the handle portion of the view?
                         mGestureStartY > getHeight() - mHandleBarHeight - getPaddingBottom();
                     mOkToFlip = getExpandedHeight() == 0;
+                    if (mStatusBar.skipToSettingsPanel()) {	  	
+                         flip = true;	  	
+                    }
                     break;
                 case MotionEvent.ACTION_MOVE:
                     final float deltaX = Math.abs(event.getX(0) - mGestureStartX);
@@ -186,7 +189,6 @@ public class NotificationPanelView extends PanelView {
             } else if (swipeFlipJustFinished) {
                 mStatusBar.completePartialFlip();
             }
-
             if (swipeFlipJustStarted || swipeFlipJustFinished) {
                 // Made up event: finger at the middle bottom of the view.
                 MotionEvent original = event;
@@ -204,7 +206,6 @@ public class NotificationPanelView extends PanelView {
                 // event.setLocation(getWidth()/2, getHeight());
                 shouldRecycleEvent = true;
             }
-
         }
         final boolean result = mHandleView.dispatchTouchEvent(event);
         if (shouldRecycleEvent) {
