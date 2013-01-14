@@ -17,6 +17,7 @@
 package com.android.internal.policy.impl.keyguard;
 
 import android.content.Context;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.widget.TextView;
@@ -226,7 +227,7 @@ public class CarrierText extends TextView {
         }
     }
 
-    private CharSequence getCarrierHelpTextForSimState(IccCardConstants.State simState,
+     private CharSequence getCarrierHelpTextForSimState(IccCardConstants.State simState,
             String plmn, String spn) {
         int carrierHelpTextId = 0;
         StatusMode status = getStatusForIccState(simState);
@@ -256,3 +257,4 @@ public class CarrierText extends TextView {
         return mContext.getText(carrierHelpTextId);
     }
 }
+

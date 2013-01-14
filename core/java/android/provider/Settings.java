@@ -2786,6 +2786,22 @@ public final class Settings {
         public static final String STATUS_BAR_CLOCK_STYLE = "status_bar_clock_style";
 
         /**
+         * Shows weekday before clock time
+         * 0 - No Day
+         * 1 - Small Day
+         * 2 - Normal Day
+         * @hide
+         */
+        public static final String STATUSBAR_CLOCK_WEEKDAY = "statusbar_clock_weekday";
+
+        /**
+         * Holds the text for the Carrier label. An empty string
+         * will bring the default text back.
+         * @hide
+         */
+        public static final String CUSTOM_CARRIER_LABEL = "custom_carrier_label";
+
+        /**
          * Whether to show the signal text or signal bars.
          * default: 0
          * 0: show signal bars
