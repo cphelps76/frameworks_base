@@ -300,7 +300,6 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
                         mLongpressActions[j],
                         mPortraitIcons[j]);
                 v.setTag((landscape ? "key_land_" : "key_") + j);
-                v.setAokpTarget(mAokpTarget);
                 iconUri = mPortraitIcons[j];
                 if (iconUri != null && iconUri.length() > 0) {
                     // custom icon from the URI here
@@ -320,7 +319,7 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
                 if (v.getId() == R.id.back){
                 	mBackIcon = mBackLandIcon = v.getDrawable();
                 }
-                if (v.getId() == R.id.menu){
+                if (v.getId() == R.id.navbar_menu_big){
                     mHasBigMenuButton = true;
                 }
                 if (mNumberOfButtons == 3 && j != (mNumberOfButtons - 1)) {
@@ -331,27 +330,21 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
                     addLightsOutButton(lightsOut, separator, landscape, true);
                 }
             }
-            // check to see if we already have a menu button
-            if (!mHasBigMenuButton) {  // don't add menu buttons if we already have one
+            if (mMenuLocation != SHOW_DONT) {
                 // add left menu
-                if (mMenuLocation != SHOW_DONT) {
-                    View leftMenuKey = generateKey(landscape, KEY_MENU_LEFT);
+                View leftMenuKey = generateKey(landscape, KEY_MENU_LEFT);
                     // since we didn't add these at the beginning, we need to insert it now
                     // the behavior is backwards from landscape (ie, insert at beginning
                     // if portrait, add to end if landscape
-                    addButton(navButtonLayout, leftMenuKey, !landscape || (landscape && mLeftyMode));
-                    addLightsOutButton(lightsOut, leftMenuKey, !landscape || (landscape && mLeftyMode), true);
-
-                    View rightMenuKey = generateKey(landscape, KEY_MENU_RIGHT);
-                    addButton(navButtonLayout, rightMenuKey, landscape && !mLeftyMode);
-                    addLightsOutButton(lightsOut, rightMenuKey, landscape && !mLeftyMode, true);
-                }
-            } else {
-                // there's a big menu button.
-                if(mMenuArrowKeys) {
+                addButton(navButtonLayout, leftMenuKey, !landscape || (landscape && mLeftyMode));
+                addLightsOutButton(lightsOut, leftMenuKey, !landscape || (landscape && mLeftyMode), true);
+             // add right menu
+                View rightMenuKey = generateKey(landscape, KEY_MENU_RIGHT);
+                addButton(navButtonLayout, rightMenuKey, landscape && !mLeftyMode);
+                addLightsOutButton(lightsOut, rightMenuKey, landscape && !mLeftyMode, true);
+            } else if(mMenuArrowKeys) {
                     addButton(navButtonLayout, generateKey(landscape, KEY_ARROW_LEFT), !landscape);
                     addButton(navButtonLayout, generateKey(landscape, KEY_ARROW_RIGHT), landscape);
-                 }
             }
         }
         Drawable bg = mContext.getResources().getDrawable(R.drawable.nav_bar_bg);
@@ -637,7 +630,7 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
     	if (!force && mShowMenu == show)
             return;
 
-        if ((mMenuLocation == SHOW_DONT) || mHasBigMenuButton) {
+        if (mMenuLocation == SHOW_DONT) {
             return;
         }
 
@@ -878,7 +871,7 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
                 if (rightArrow != null) {
                     rightArrow.setVisibility(View.VISIBLE);
                 }
-                if (!mHasBigMenuButton) {
+                if (mMenuLocation != SHOW_DONT) {
                     if (leftMenu != null) {
                         leftMenu.setCode(KeyEvent.KEYCODE_DPAD_LEFT);
                         leftMenu.setImageResource(R.drawable.ic_sysbar_ime_left);
@@ -900,7 +893,7 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
                 if (rightArrow != null) {
                     rightArrow.setVisibility(View.GONE);
                 }
-                if (!mHasBigMenuButton) {
+                if (mMenuLocation != SHOW_DONT) {
                     if (leftMenu != null && leftMenu.getCode() == KeyEvent.KEYCODE_DPAD_LEFT) {
                         leftMenu.setCode(KeyEvent.KEYCODE_MENU);
                         leftMenu.setSupportsLongPress(false);
@@ -919,7 +912,7 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
                 if (rightArrow != null) {
                     rightArrow.setVisibility(View.INVISIBLE);
                 }
-                if (!mHasBigMenuButton) {
+                if (mMenuLocation != SHOW_DONT) {
                     if (leftMenu != null && leftMenu.getCode() == KeyEvent.KEYCODE_DPAD_LEFT) {
                         leftMenu.setVisibility(View.INVISIBLE);
                     }
