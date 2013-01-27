@@ -86,7 +86,6 @@ public class AwesomeAction {
     public final static String ACTION_TORCH = "**torch**";
     public final static String ACTION_SEARCH = "**search**";
     public final static String ACTION_LAST_APP = "**lastapp**";
-    public final static String ACTION_RECENTS_GB = "**recentsgb**";
     public final static String ACTION_NULL = "**null**";
 
     private int mInjectKeyCode;
@@ -137,9 +136,6 @@ public class AwesomeAction {
         } else if (action.equals(ACTION_POWER)) {
             injectKeyDelayed(KeyEvent.KEYCODE_POWER);
             return true;
-        } else if (action.equals(ACTION_RECENTS_GB)) {
-            injectKeyDelayed(KeyEvent.KEYCODE_APP_SWITCH);
-            return true;
         } else if (action.equals(ACTION_IME)) {
             mContext.sendBroadcast(new Intent("android.settings.SHOW_INPUT_METHOD_PICKER"));
             return true;
@@ -147,9 +143,11 @@ public class AwesomeAction {
             takeScreenshot();
             return true;
         } else if (action.equals(ACTION_TORCH)) {
-            Intent i = new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT");
-            i.putExtra("bright", false);
-            mContext.sendBroadcast(i);
+            Intent intent = new Intent("android.intent.action.MAIN");
+            intent.setComponent(ComponentName.unflattenFromString("com.aokp.Torch/.TorchActivity"));
+            intent.addCategory("android.intent.category.LAUNCHER");
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
             return true;
         } else if (action.equals(ACTION_TODAY)) {
             long startMillis = System.currentTimeMillis();
@@ -273,6 +271,41 @@ public class AwesomeAction {
         return false; // we didn't handle the action!
     }
 
+    public Drawable getIconImage(String uri) {
+        if (uri == null)
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_null);
+        if (uri.equals(ACTION_HOME))
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_home);
+        if (uri.equals(ACTION_BACK))
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_back);
+        if (uri.equals(ACTION_RECENTS))
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_recent);
+        if (uri.equals(ACTION_SCREENSHOT))
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_screenshot);
+        if (uri.equals(ACTION_MENU))
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_menu_big);
+        if (uri.equals(ACTION_IME))
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_ime_switcher);
+        if (uri.equals(ACTION_KILL))
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_killtask);
+        if (uri.equals(ACTION_POWER))
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_power);
+        if (uri.equals(ACTION_SEARCH))
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_search);
+        if (uri.equals(ACTION_NOTIFICATIONS))
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_notifications);
+        if (uri.equals(ACTION_LAST_APP))
+            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_lastapp);
+        try {
+            return mContext.getPackageManager().getActivityIcon(Intent.parseUri(uri, 0));
+        } catch (NameNotFoundException e) {
+            e.printStackTrace();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return mContext.getResources().getDrawable(R.drawable.ic_sysbar_null);
+    }
+
     public String getProperSummary(String uri) {
         if (uri.equals(ACTION_HOME))
             return mContext.getResources().getString(R.string.action_home);
@@ -294,6 +327,8 @@ public class AwesomeAction {
             return mContext.getResources().getString(R.string.action_search);
         if (uri.equals(ACTION_NOTIFICATIONS))
             return mContext.getResources().getString(R.string.action_notifications);
+        if (uri.equals(ACTION_LAST_APP))
+            return mContext.getResources().getString(R.string.action_lastapp);
         if (uri.equals(ACTION_NULL))
             return mContext.getResources().getString(R.string.action_none);
         try {
