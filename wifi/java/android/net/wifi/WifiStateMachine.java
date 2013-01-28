@@ -2800,18 +2800,12 @@ public class WifiStateMachine extends StateMachine {
                     break;
                 case CMD_SET_COUNTRY_CODE:
                     String country = (String) message.obj;
-<<<<<<< HEAD
-                    if (DBG) log("set country code " + country);
-                    if (!mWifiNative.setCountryCode(country.toUpperCase())) {
-                        loge("Failed to set country code " + country);
-=======
                     String countryCode = country != null ? country.toUpperCase() : null;
                     if (DBG) log("set country code " + countryCode);
                     if (mWifiNative.setCountryCode(countryCode)) {
                         mCountryCode = countryCode;
                     } else {
                         loge("Failed to set country code " + countryCode);
->>>>>>> db825aa... Wi-Fi: Pass default country code to driver
                     }
                     break;
                 case CMD_SET_FREQUENCY_BAND:
