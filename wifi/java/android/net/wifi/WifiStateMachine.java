@@ -2810,20 +2810,11 @@ public class WifiStateMachine extends StateMachine {
                     break;
                 case CMD_SET_COUNTRY_CODE:
                     String country = (String) message.obj;
-<<<<<<< HEAD
-                    String countryCode = country != null ? country.toUpperCase() : null;
-                    if (DBG) log("set country code " + countryCode);
-                    if (mWifiNative.setCountryCode(countryCode)) {
-                        mCountryCode = countryCode;
-                    } else {
-                        loge("Failed to set country code " + countryCode);
-=======
                     if (DBG) log("set country code " + country);
                     if (mWifiNative.setCountryCode(country.toUpperCase())) {
                         mCountryCode = country;
                     } else {
                         loge("Failed to set country code " + country);
->>>>>>> 9f57964... wifi: Allow Settings to retrieve country code
                     }
                     break;
                 case CMD_SET_FREQUENCY_BAND:
