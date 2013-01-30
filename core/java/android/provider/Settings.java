@@ -3027,33 +3027,6 @@ public final class Settings {
         public static final String POWER_MENU_SILENT_ENABLED = "power_menu_silent_enabled";
 
         /**
-         * Current UI Mode
-         * 
-         *  0 = Phone UI
-         *  1 = Tablet UI
-         *  2 = Phablet UI
-         *  @hide
-         */
-        public static final String CURRENT_UI_MODE = "current_ui_mode";
-
-        /**
-         * User selected UI Mode
-         * 
-         *  0 = Phone UI
-         *  1 = Tablet UI
-         *  2 = Phablet UI
-         *  @hide
-         */
-        public static final String USER_UI_MODE = "user_ui_mode";
-
-       /**
-         * User configurable flag for determining if NavBar is enabled
-         *
-         * @hide
-         */
-        public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
-
-        /**
 	* Wether the hints for the left and right widgets are shown when the screen is turned on
 	* @hide
 	*/
@@ -3067,13 +3040,8 @@ public final class Settings {
         public static final String QUICK_TOGGLES = "quick_toggles";
 
         /**
-         * Widgets to show, should be separated by |
-         * @hide
-         */
-        public static final String NAVIGATION_BAR_WIDGETS = "navigation_bar_widgets";
-
-        /**
          * number of tiles per row in quick settings
+         *
          * @hide
          */
         public static final String QUICK_TOGGLES_PER_ROW = "quick_toggles_per_row";
