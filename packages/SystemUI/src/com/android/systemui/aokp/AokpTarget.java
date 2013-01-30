@@ -92,8 +92,8 @@ public class AokpTarget {
     public final static String ACTION_ALARM = "**alarm**";
     public final static String ACTION_TODAY = "**today**";
     public final static String ACTION_CLOCKOPTIONS = "**clockoptions**";
-    public final static String ACTION_VOICEASSIST = "**voiceassist**";
-    public final static String ACTION_TORCH = "**torch**";
+	public final static String ACTION_VOICEASSIST = "**voiceassist**";
+	public final static String ACTION_TORCH = "**torch**";
     public final static String ACTION_NULL = "**null**";
 
     private int mInjectKeyCode;
@@ -185,7 +185,7 @@ public class AokpTarget {
 			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity(intent);
 			return true;
-	}
+		}
         if (action.equals(ACTION_ASSIST)) {
             Intent intent = new Intent(Intent.ACTION_ASSIST);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

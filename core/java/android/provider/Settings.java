@@ -3071,6 +3071,12 @@ public final class Settings {
          */
         public static final String LOCKSCREEN_VIBRATE_ENABLED = "lockscreen.vibrate_enabled";
 
+        /**
+         * Weather to minimize lockscreen challenge on screen turned on
+         * @hide
+         */
+        public static final String LOCKSCREEN_MAXIMIZE_WIDGETS = "lockscreen_maximize_widgets";
+
          /**
           * Volume keys control cursor in text fields (default is 0)
           * 0 - Disabled
@@ -3078,7 +3084,7 @@ public final class Settings {
           * 2 - Volume up/down moves cursor right/left
           * @hide
           */
-        public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
+         public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
@@ -3406,123 +3412,34 @@ public final class Settings {
          *  we always vibrate, even if no vibration was specified
          */
         public static final String NOTIFICATION_CONVERT_SOUND_TO_VIBRATION = "convert_sound_to_vibration";
-
-        /**
-        * User interface mode. This is used to change from singlepane mode forcing it to
-        * Change into multipane mode. Default is disabled.
-        */
-        public static final String FORCE_DUAL_PANEL = "force_dualpanel";
-
-
-        /**
-         * boolean value. toggles using arrow key locations on nav bar
-         * as left and right dpad keys
-         * @hide
-         */
-        public static final String NAVIGATION_BAR_MENU_ARROW_KEYS = "navigation_bar_menu_arrow_keys";
-
          /** @hide
          */
-        public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show";
-
-
-        /**
-         * Used as a flag to determine if we are showing the NavBar *NOW* or is it hidden
-         * @hide
-         */
-        public static final String NAVIGATION_BAR_SHOW_NOW = "navigation_bar_show_now";
-
-		/**
-         * Show the NavBar dialog in Power menu
-         * @hide
-         */
-        public static final String POWER_DIALOG_SHOW_NAVBAR_HIDE = "power_dialog_show_navbar_hide";
+        public static final String NAVIGATION_BAR_SHOW = "navigation_bar_show" ;
 
         /**
+         * Navigation bar height in portrait
          * @hide
          */
         public static final String NAVIGATION_BAR_HEIGHT = "navigation_bar_height";
 
         /**
+         * Navigation bar height in landscape
          * @hide
          */
         public static final String NAVIGATION_BAR_HEIGHT_LANDSCAPE = "navigation_bar_height_landscape";
 
         /**
+         * Navigation bar height in landscape if the bar is along the side of the device
          * @hide
          */
         public static final String NAVIGATION_BAR_WIDTH = "navigation_bar_width";
 
         /**
-         * @hide
-         */
-        public static final String MENU_LOCATION = "menu_location";
-
-        /**
-         * @hide
-         */
-        public static final String MENU_VISIBILITY = "menu_visibility";
-
-        /**
-         * @hide
-         */
-        public static final String NAVIGATION_BAR_BUTTONS_QTY = "navigation_bar_buttons_qty";
-
-        /**
-         * Weather to minimize lockscreen challenge on screen turned on
-         * @hide
-         */
-        public static final String LOCKSCREEN_MAXIMIZE_WIDGETS = "lockscreen_maximize_widgets";
-
-        /**
-         * @hide
-         */
-        public static final String[] NAVIGATION_CUSTOM_ACTIVITIES = new String[] {
-            "navigation_custom_app_intent_0",
-            "navigation_custom_app_intent_1",
-            "navigation_custom_app_intent_2",
-            "navigation_custom_app_intent_3",
-            "navigation_custom_app_intent_4",
-            "navigation_custom_app_intent_5",
-            "navigation_custom_app_intent_6",
-        };
-
-        /**
-         * @hide
-         */
-        public static final String[] NAVIGATION_LONGPRESS_ACTIVITIES = new String[] {
-            "navigation_longpress_app_intent_0",
-            "navigation_longpress_app_intent_1",
-            "navigation_longpress_app_intent_2",
-            "navigation_longpress_app_intent_3",
-            "navigation_longpress_app_intent_4",
-            "navigation_longpress_app_intent_5",
-            "navigation_longpress_app_intent_6",
-        };
-
-        /**
-         * @hide
-         */
-        public static final String[] NAVIGATION_CUSTOM_APP_ICONS = new String[] {
-            "navigation_custom_app_icon_0",
-            "navigation_custom_app_icon_1",
-            "navigation_custom_app_icon_2",
-            "navigation_custom_app_icon_3",
-            "navigation_custom_app_icon_4",
-            "navigation_custom_app_icon_5",
-            "navigation_custom_app_icon_6",
-        };
-
-        /**
-         * Widgets to show, should be separated by |
-         */
-        public static final String NAVIGATION_BAR_WIDGETS = "navigation_bar_widgets";
-
-        /**
+         * Navigation bar Alpha
          * @hide
          */
         public static final String NAVIGATION_BAR_BUTTON_ALPHA = "navigation_bar_button_alpha";
-
+    
         /**
          * @hide
          */
@@ -3534,56 +3451,16 @@ public final class Settings {
         public static final String NAVIGATION_BAR_GLOW_TINT = "navigation_bar_glow_tint";
 
         /**
+        * User interface mode. This is used to change from singlepane mode forcing it to
+        * Change into multipane mode. Default is disabled.
+        */
+        public static final String FORCE_DUAL_PANEL = "force_dualpanel";
+
+        /**
          * @hide
          */
         public static final String[] NAVIGATION_BAR_GLOW_DURATION = new String[] {
-            "navigation_bar_glow_duration_off",
-            "navigation_bar_glow_duration_on",
-        };
-
-       /**
-        * Lefty mode
-        * @hide
-        */
-        public static final String NAVIGATION_BAR_LEFTY_MODE = "navigation_bar_lefty_mode";
-
-       /**
-        *
-        * @hide
-        */
-        public static final String SYSTEMUI_NAVRING_AMOUNT = "systemui_navring_amount";
-
-       /**
-        *
-        * @hide
-        */
-        public static final String SYSTEMUI_NAVRING_LONG_ENABLE = "systemui_navring_long_enable";
-
-        /**
-         * Custom navring actions
-         *
-         * @hide
-         */
-        public static final String[] SYSTEMUI_NAVRING = new String[] {
-                "navring_0",
-                "navring_1",
-                "navring_2",
-                "navring_3",
-                "navring_4",
-        };
-
-        /**
-         * Custom navring long press actions
-         *
-         * @hide
-         */
-        public static final String[] SYSTEMUI_NAVRING_LONG = new String[] {
-                "navring_long_0",
-                "navring_long_1",
-                "navring_long_2",
-                "navring_long_3",
-                "navring_long_4",
-        };
+            "navigation_bar_glow_duration_off", "navigation_bar_glow_duration_on" };
 
     }
 
