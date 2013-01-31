@@ -3588,6 +3588,12 @@ public final class Settings {
             Secure.WIFI_WATCHDOG_PING_TIMEOUT_MS;
 
         /**
+        * User interface mode. This is used to change from singlepane mode forcing it to
+        * Change into multipane mode. Default is disabled.
+        */
+        public static final String FORCE_DUAL_PANEL = "force_dualpanel";
+
+        /**
          * toggle to "fix" the following: (found in NotificationManagerService)
          *  new in 4.2: if there was supposed to be a sound and we're in vibrate mode,
          *  we always vibrate, even if no vibration was specified
