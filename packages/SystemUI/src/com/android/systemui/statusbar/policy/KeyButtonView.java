@@ -63,6 +63,7 @@ public class KeyButtonView extends ImageView {
     int mDurationSpeedOff = 50;
     float mGlowAlpha = 0f, mGlowScale = 1f, mDrawingAlpha = 1f;
     boolean mSupportsLongpress = true;
+    boolean mShouldTintIcons = true;
     protected boolean mHandlingLongpress = false;
     RectF mRect = new RectF(0f,0f,0f,0f);
     AnimatorSet mPressedAnim;
