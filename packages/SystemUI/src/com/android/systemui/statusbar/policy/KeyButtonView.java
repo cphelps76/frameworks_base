@@ -399,7 +399,7 @@ public class KeyButtonView extends ImageView {
         }
 
         int defaultButtonColor = mContext.getResources().getColor(
-                    com.android.internal.R.color.white);
+                    com.android.internal.R.color.transparent);
         int color = Settings.System.getInt(resolver,
                 Settings.System.NAVIGATION_BAR_TINT, defaultButtonColor);
         if (color == Integer.MIN_VALUE) {

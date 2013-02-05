@@ -20,7 +20,7 @@ public class BackgroundAlphaColorDrawable extends ColorDrawable {
 
     public void setBgColor(int color) {
         if (color < 0) {
-            color = Color.BLACK;
+            color = Color.TRANSPARENT;
         }
         mBgColor = color;
         updateColor();
