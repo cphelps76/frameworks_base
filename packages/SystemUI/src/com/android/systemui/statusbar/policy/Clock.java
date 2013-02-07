@@ -55,7 +55,6 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
     private String mClockFormatString;
     private SimpleDateFormat mClockFormat;
 
-
     public static final int AM_PM_STYLE_NORMAL  = 0;
     public static final int AM_PM_STYLE_SMALL   = 1;
     public static final int AM_PM_STYLE_GONE    = 2;
@@ -116,7 +115,6 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
             setOnLongClickListener(this);
         }
         updateSettings();
-
     }
 
     @Override
@@ -170,12 +168,12 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
         }
     };
 
-    final void updateClock() {
+    protected final void updateClock() {
         mCalendar.setTimeInMillis(System.currentTimeMillis());
         setText(getSmallTime());
     }
 
-    private final CharSequence getSmallTime() {
+    protected final CharSequence getSmallTime() {
         Context context = getContext();
         boolean b24 = DateFormat.is24HourFormat(context);
         int res;
@@ -244,10 +242,6 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
             }
         }
         return formatted;
-    }
-
-    private void updateParameters() {
-        mClockFormatString = null;
     }
 
     protected void updateSettings(){
