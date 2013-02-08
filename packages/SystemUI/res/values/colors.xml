@@ -51,14 +51,14 @@
     <color name="pie_background">#aa333333</color>
     <color name="pie_button">#b2ffffff</color>
     <color name="pie_select">#aa33b5e5</color>
-    <color name="pie_outlines">#ffffffff</color>
-    <color name="chevron_left">#0999cc</color>
+    <color name="pie_outlines">#ff33b6e5</color>
+    <color name="chevron_left">#33b5e5</color>
     <color name="chevron_right">#33b5e5</color>
     <color name="battery_juice">#33b5e5</color>
     <color name="battery_juice_low">#ffbb33</color>
     <color name="battery_juice_critical">#ff4444</color>
     <color name="battery_background">#ffffff</color>
-    <color name="status">#ffffff</color>
+    <color name="status">#33b5e5</color>
 
     <!-- THEMEABLE PIE PIE PIE PIE PIE? -->
 </resources>
