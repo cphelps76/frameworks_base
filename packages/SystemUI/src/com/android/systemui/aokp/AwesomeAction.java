@@ -273,39 +273,38 @@ public class AwesomeAction {
         return false; // we didn't handle the action!
     }
 
-    public Drawable getIconImage(String uri) {
-        if (uri == null)
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_null);
+    public String getProperSummary(String uri) {
         if (uri.equals(ACTION_HOME))
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_home);
+            return mContext.getResources().getString(R.string.action_home);
         if (uri.equals(ACTION_BACK))
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_back);
+            return mContext.getResources().getString(R.string.action_back);
         if (uri.equals(ACTION_RECENTS))
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_recent);
+            return mContext.getResources().getString(R.string.action_recents);
         if (uri.equals(ACTION_SCREENSHOT))
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_screenshot);
+            return mContext.getResources().getString(R.string.action_screenshot);
         if (uri.equals(ACTION_MENU))
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_menu_big);
+            return mContext.getResources().getString(R.string.action_menu);
         if (uri.equals(ACTION_IME))
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_ime_switcher);
+            return mContext.getResources().getString(R.string.action_ime);
         if (uri.equals(ACTION_KILL))
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_killtask);
+            return mContext.getResources().getString(R.string.action_kill);
         if (uri.equals(ACTION_POWER))
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_power);
+            return mContext.getResources().getString(R.string.action_power);
         if (uri.equals(ACTION_SEARCH))
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_search);
+            return mContext.getResources().getString(R.string.action_search);
         if (uri.equals(ACTION_NOTIFICATIONS))
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_notifications);
-        if (uri.equals(ACTION_LAST_APP))
-            return mContext.getResources().getDrawable(R.drawable.ic_sysbar_lastapp);
+            return mContext.getResources().getString(R.string.action_notifications);
+        if (uri.equals(ACTION_NULL))
+            return mContext.getResources().getString(R.string.action_none);
         try {
-            return mContext.getPackageManager().getActivityIcon(Intent.parseUri(uri, 0));
-        } catch (NameNotFoundException e) {
-            e.printStackTrace();
+            Intent intent = Intent.parseUri(uri, 0);
+            if (Intent.ACTION_MAIN.equals(intent.getAction())) {
+                return getFriendlyActivityName(intent);
+            }
+            return getFriendlyShortcutName(intent);
         } catch (URISyntaxException e) {
-            e.printStackTrace();
         }
-        return mContext.getResources().getDrawable(R.drawable.ic_sysbar_null);
+        return mContext.getResources().getString(R.string.action_none);
     }
 
     private String getFriendlyActivityName(Intent intent) {
