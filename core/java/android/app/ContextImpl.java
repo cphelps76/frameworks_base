@@ -552,8 +552,6 @@ class ContextImpl extends Context {
                     final Context outerContext = ctx.getOuterContext();
                     return new ProfileManager (outerContext, ctx.mMainThread.getHandler());
                 }});
-<<<<<<< HEAD
-=======
 
         registerService(WimaxManagerConstants.WIMAX_SERVICE, new ServiceFetcher() {
                 public Object createService(ContextImpl ctx) {
@@ -573,7 +571,6 @@ class ContextImpl extends Context {
                     IFmTransmitter service = IFmTransmitter.Stub.asInterface(b);
                     return new FmTransmitterImpl(service);
                 }});
->>>>>>> 44f2f8d... FM Radio: Add support for FM Radio in Android
     }
 
     static ContextImpl getImpl(Context context) {
