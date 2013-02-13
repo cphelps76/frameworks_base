@@ -25,6 +25,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
+import android.content.res.Resources;
+import android.graphics.Canvas;
 import android.os.Handler;
 import android.provider.AlarmClock;
 import android.provider.Settings;
@@ -75,6 +77,10 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
 
     protected int mClockStyle;
 
+    protected static int mClockColor = com.android.internal.R.color.holo_blue_light;
+    protected static int mExpandedClockColor = com.android.internal.R.color.holo_blue_light;
+    protected static int defaultColor, defaultExpandedColor;
+
     Handler mHandler;
 
     protected class SettingsObserver extends ContentObserver {
@@ -90,6 +96,11 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
                     Settings.System.STATUS_BAR_CLOCK_STYLE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
 		    Settings.System.STATUSBAR_CLOCK_WEEKDAY), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUSBAR_CLOCK_COLOR), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUSBAR_EXPANDED_CLOCK_COLOR), false, this);
+            updateSettings();
         }
 
         @Override public void onChange(boolean selfChange) {
@@ -266,8 +277,33 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
                 updateClock();
             }
         }
+        if (IsShade()) {
+            defaultExpandedColor = getCurrentTextColor();
+            mExpandedClockColor = Settings.System.getInt(resolver,
+                Settings.System.STATUSBAR_EXPANDED_CLOCK_COLOR, defaultExpandedColor);
+            if (mClockColor == Integer.MIN_VALUE) {
+                // flag to reset the color
+                mClockColor = defaultColor;
+            }
+            setTextColor(mExpandedClockColor);
+        } else {
+            defaultColor = getCurrentTextColor();
+            mClockColor = Settings.System.getInt(resolver,
+                Settings.System.STATUSBAR_CLOCK_COLOR, defaultColor);
+            if (mExpandedClockColor == Integer.MIN_VALUE) {
+                // flag to reset the color
+                mExpandedClockColor = defaultExpandedColor;
+            }
+            setTextColor(mClockColor);
+        }
         mClockStyle = (Settings.System.getInt(resolver,Settings.System.STATUS_BAR_CLOCK_STYLE, 1));
         updateClockVisibility(true);  
+    }
+
+    public boolean IsShade()
+    {
+        Object o = getTag();
+        return (o != null && o.toString().equals("expanded"));
     }
 
     public void updateClockVisibility(boolean show) {
