@@ -51,21 +51,12 @@ import java.util.TimeZone;
 /**
  * Digital clock for the status bar.
  */
-<<<<<<< HEAD
-public class Clock extends TextView implements OnClickListener, OnLongClickListener {
-    private boolean mAttached;
-    private Calendar mCalendar;
-    private String mClockFormatString;
-    private SimpleDateFormat mClockFormat;
-=======
-public class Clock extends TextView {
+public class Clock extends TextView {implements OnClickListener, OnLongClickListener {
     protected boolean mAttached;
     protected Calendar mCalendar;
     protected String mClockFormatString;
     protected SimpleDateFormat mClockFormat;
     private Locale mLocale;
->>>>>>> f8186c3... Merge remote-tracking branch 'remotes/aosp/jb-mr1.1-release' into jb-4.2
-
 
     public static final int AM_PM_STYLE_NORMAL  = 0;
     public static final int AM_PM_STYLE_SMALL   = 1;
