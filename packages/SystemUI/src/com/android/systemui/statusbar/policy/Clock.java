@@ -51,7 +51,7 @@ import java.util.TimeZone;
 /**
  * Digital clock for the status bar.
  */
-public class Clock extends TextView {implements OnClickListener, OnLongClickListener {
+public class Clock extends TextView implements OnClickListener, OnLongClickListener {
     protected boolean mAttached;
     protected Calendar mCalendar;
     protected String mClockFormatString;

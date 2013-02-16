@@ -349,6 +349,7 @@ public class KeyguardHostView extends KeyguardViewBase {
             // Do nothing here
             }
         }
+    }
 
     private boolean shouldEnableAddWidget() {
         return numWidgets() < MAX_WIDGETS && mUserSetupCompleted;
@@ -448,20 +449,6 @@ public class KeyguardHostView extends KeyguardViewBase {
             }
             if (!shouldEnableAddWidget()) {
                 mAppWidgetContainer.setAddWidgetEnabled(false);
-            }
-        }
-
-        @Override
-        public void onRemoveView(View v) {
-            mUnlimitedWidgets = Settings.System.getBoolean(getContext().getContentResolver(),
-                                  Settings.System.LOCKSCREEN_UNLIMITED_WIDGETS, false);
-            if (mUnlimitedWidgets) {
-                MAX_WIDGETS = numWidgets() + 1;
-            } else {
-                MAX_WIDGETS = 5;
-            }
-            if (numWidgets() < MAX_WIDGETS) {
-                setAddWidgetEnabled(true);
             }
         }
 
@@ -1171,6 +1158,14 @@ public class KeyguardHostView extends KeyguardViewBase {
             }
         }
         return widgetCount;
+    }
+
+    private void setAddWidgetEnabled(boolean clickable) {
+        View addWidget = mAppWidgetContainer.findViewById(R.id.keyguard_add_widget);
+        if (addWidget != null) {
+            View addWidgetButton = addWidget.findViewById(R.id.keyguard_add_widget_view);
+            addWidgetButton.setEnabled(clickable);
+        }
     }
 
     private void addDefaultWidgets() {
