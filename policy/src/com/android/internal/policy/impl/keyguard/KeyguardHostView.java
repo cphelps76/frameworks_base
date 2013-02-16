@@ -351,7 +351,14 @@ public class KeyguardHostView extends KeyguardViewBase {
         }
     }
 
-    private boolean shouldEnableAddWidget() {
+     private boolean shouldEnableAddWidget() {
+        mUnlimitedWidgets = Settings.System.getBoolean(getContext().getContentResolver(),
+                                  Settings.System.LOCKSCREEN_UNLIMITED_WIDGETS, false);
+        if (mUnlimitedWidgets) {
+            MAX_WIDGETS = numWidgets() + 1;
+        } else {
+            MAX_WIDGETS = 5;
+        }
         return numWidgets() < MAX_WIDGETS && mUserSetupCompleted;
     }
 
@@ -441,6 +448,7 @@ public class KeyguardHostView extends KeyguardViewBase {
                 mAppWidgetContainer.setAddWidgetEnabled(false);
             }
         }
+
         @Override
         public void onRemoveView(View v, boolean deletePermanently) {
             if (deletePermanently) {
