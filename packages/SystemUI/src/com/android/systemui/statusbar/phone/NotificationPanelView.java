@@ -16,10 +16,14 @@
 
 package com.android.systemui.statusbar.phone;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
+import android.database.ContentObserver;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Handler;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
@@ -51,6 +55,11 @@ public class NotificationPanelView extends PanelView {
     private boolean mTrackingSwipe;
     private boolean mSwipeTriggered;
 
+    int mToggleStyle;
+    ContentObserver mEnableObserver;
+    ContentObserver mChangeSideObserver;
+    Handler mHandler = new Handler();
+
     public NotificationPanelView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
@@ -67,8 +76,20 @@ public class NotificationPanelView extends PanelView {
         mHandleBar = resources.getDrawable(R.drawable.status_bar_close);
         mHandleBarHeight = resources.getDimensionPixelSize(R.dimen.close_handle_height);
         mHandleView = findViewById(R.id.handle);
-
         setContentDescription(resources.getString(R.string.accessibility_desc_notification_shade));
+
+        final ContentResolver resolver = getContext().getContentResolver();
+        mEnableObserver = new ContentObserver(mHandler) {
+            @Override
+            public void onChange(boolean selfChange) {
+                mToggleStyle = Settings.System.getInt(resolver,
+                        Settings.System.TOGGLES_STYLE, 0);
+            }
+        };
+
+        resolver.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.TOGGLES_STYLE),
+                true, mEnableObserver);
     }
 
     @Override
@@ -118,17 +139,22 @@ public class NotificationPanelView extends PanelView {
                         // Pointer is at the handle portion of the view?
                         mGestureStartY > getHeight() - mHandleBarHeight - getPaddingBottom();
                     mOkToFlip = getExpandedHeight() == 0;
+
                     if(mStatusBar.skipToSettingsPanel()) {
                         flip = true;
                     } else if (event.getX(0) > getWidth() * (1.0f - STATUS_BAR_SETTINGS_RIGHT_PERCENTAGE) &&
                             Settings.System.getInt(getContext().getContentResolver(),
                                     Settings.System.QS_QUICK_PULLDOWN, 0) == 1) {
                         flip = true;
-
                     } else if (event.getX(0) < getWidth() * (1.0f - STATUS_BAR_SETTINGS_LEFT_PERCENTAGE) &&
                             Settings.System.getInt(getContext().getContentResolver(),
                                     Settings.System.QS_QUICK_PULLDOWN, 0) == 2) {
                         flip = true;
+                    }
+                    if(mToggleStyle != 0) {
+                        // don't allow settings panel with non-tile toggles
+                        mOkToFlip = false;
+                        break;
                     }
                     break;
                 case MotionEvent.ACTION_MOVE:
