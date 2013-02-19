@@ -3426,6 +3426,14 @@ public final class Settings {
                 "navring_long_4",
         };
 
+        public static final String[] SYSTEMUI_NAVRING_ICON = new String[] {
+                "navring_icon_0",
+                "navring_icon_1",
+                "navring_icon_2",
+                "navring_icon_3",
+                "navring_icon_4",
+        };
+
         /**
         *
 	* Wether the hints for the left and right widgets are shown when the screen is turned on
