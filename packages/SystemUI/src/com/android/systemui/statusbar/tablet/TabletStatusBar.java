@@ -1626,5 +1626,3 @@ public class TabletStatusBar extends BaseStatusBar implements
                 || (mDisabled & StatusBarManager.DISABLE_HOME) != 0;
     }
 }
-
-

@@ -74,8 +74,7 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-
-
+import static com.android.internal.util.aokp.AwesomeConstants.*;
 import com.android.internal.widget.multiwaveview.GlowPadView;
 import com.android.internal.widget.multiwaveview.GlowPadView.OnTriggerListener;
 import com.android.internal.widget.multiwaveview.TargetDrawable;
@@ -87,6 +86,8 @@ import com.android.systemui.statusbar.phone.PhoneStatusBar;
 import com.android.systemui.statusbar.tablet.StatusBarPanel;
 import com.android.systemui.statusbar.tablet.TabletStatusBar;
 import com.android.systemui.aokp.AokpTarget;
+import com.android.systemui.aokp.AwesomeAction;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -171,6 +172,7 @@ public class SearchPanelView extends FrameLayout implements
                     Log.d(TAG,"LongPress!");
                     mBar.hideSearchPanel();
                     mAokpTarget.launchAction(longList.get(mTarget));
+                    AwesomeAction.launchAction(mContext, longList.get(mTarget));
                     mSearchPanelLock = true;
                  }
             }
@@ -331,8 +333,6 @@ public class SearchPanelView extends FrameLayout implements
 
         if (action == null || action.equals("") || action.equals("**null**"))
             return cDrawable;
-        if (action.equals("**screenshot**"))
-            return new TargetDrawable(mResources, mResources.getDrawable(R.drawable.ic_action_screenshot));
         if (action.equals("**ime**"))
             return new TargetDrawable(mResources, mResources.getDrawable(R.drawable.ic_action_ime_switcher));
         if (action.equals("**ring_vib**"))
