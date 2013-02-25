@@ -1251,7 +1251,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     }
 
     protected void updateCarrierAndWifiLabelVisibility(boolean force) {
-        if (mCarrierAndWifiView != null) {
+	if (!mShowCarrierInPanel || mCarrierAndWifiView == null) return;
             if (DEBUG) {
                 Slog.d(TAG, String.format("pileh=%d scrollh=%d carrierh=%d",
                         mPile.getHeight(), mScrollView.getHeight(), mCarrierAndWifiViewHeight));
