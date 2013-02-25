@@ -265,7 +265,6 @@ public class KeyguardHostView extends KeyguardViewBase {
         View deleteDropTarget = findViewById(R.id.keyguard_widget_pager_delete_target);
         mAppWidgetContainer = (KeyguardWidgetPager) findViewById(R.id.app_widget_container);
         mAppWidgetContainer.setVisibility(VISIBLE);
-        removeView(mAppWidgetContainerHidden);
         mAppWidgetContainer.setCallbacks(mWidgetCallbacks);
         mAppWidgetContainer.setDeleteDropTarget(deleteDropTarget);
         mAppWidgetContainer.setMinScale(0.5f);
