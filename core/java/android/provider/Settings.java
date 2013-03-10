@@ -3199,6 +3199,12 @@ public final class Settings {
          */
         public static final String POWER_MENU_AIRPLANE_ENABLED = "power_menu_airplane_enabled";
 
+        /*
+         * Screenshot toggle delay
+         * @hide
+         */
+        public static final String SCREENSHOT_TOGGLE_DELAY = "screenshot_toggle_delay";
+
         /**
          * Whether power menu user switcher is enabled
          * @hide
