@@ -3257,7 +3257,7 @@ public final class Settings {
          */
         public static final String POWER_DIALOG_SHOW_REBOOT_KEYGUARD = "power_dialog_show_reboot_keyguard";
 
-        /**
+         /**
          * @hide
          */
         public static final String NAVIGATION_BAR_HEIGHT = "navigation_bar_height";
@@ -3272,6 +3272,17 @@ public final class Settings {
          */
         public static final String NAVIGATION_BAR_WIDTH = "navigation_bar_width";
 
+        /**
+         *
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_WIDTH_PORT = "navigation_bar_width_port";
+
+        /**
+        *
+        * @hide
+        */
+        public static final String NAVIGATION_BAR_WIDTH_LAND = "navigation_bar_width_land";
         /**
          * @hide
          */
@@ -3868,13 +3879,6 @@ public final class Settings {
          * @hide
          */
         public static final String NAVIGATION_BAR_MENU_ARROW_KEYS = "navigation_bar_menu_arrow_keys";
-
-        /**
-         * Navigation bar alpha while in homescreen and lockscreen.
-         *
-         * @hide
-         */
-        public static final String NAVIGATION_BAR_ALPHA = "navigation_bar_alpha";
 
         /**
          * Navigation bar color.
