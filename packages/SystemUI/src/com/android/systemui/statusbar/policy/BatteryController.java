@@ -55,12 +55,15 @@ public class BatteryController extends BroadcastReceiver {
     public  static final int BATTERY_STYLE_CIRCLE_PERCENT = 3;
     private static final int BATTERY_STYLE_GONE           = 4;
     private static final int BATTERY_STYLE_DIGITAL = 5;
+    private static final int BATTERY_STYLE_FAT = 6;
     private static final int BATTERY_ICON_STYLE_NORMAL      = R.drawable.stat_sys_battery;
     private static final int BATTERY_ICON_STYLE_CHARGE      = R.drawable.stat_sys_battery_charge;
     private static final int BATTERY_ICON_STYLE_NORMAL_MIN  = R.drawable.stat_sys_battery_min;
     private static final int BATTERY_ICON_STYLE_CHARGE_MIN  = R.drawable.stat_sys_battery_charge_min;
     private static final int BATTERY_ICON_STYLE_NORMAL_DIGITAL = R.drawable.stat_sys_battery_digital;
     private static final int BATTERY_ICON_STYLE_CHARGE_DIGITAL = R.drawable.stat_sys_battery_charge_digital;
+    private static final int BATTERY_ICON_STYLE_NORMAL_FAT = R.drawable.stat_sys_battery_stub;
+    private static final int BATTERY_ICON_STYLE_CHARGE_FAT = R.drawable.stat_sys_battery_charge;
 
     private static final int BATTERY_TEXT_STYLE_NORMAL  = R.string.status_bar_settings_battery_meter_format;
     private static final int BATTERY_TEXT_STYLE_MIN     = R.string.status_bar_settings_battery_meter_min_format;
@@ -164,6 +167,10 @@ public class BatteryController extends BroadcastReceiver {
  	    mIcon = (View.VISIBLE);
  	    mIconStyle = mBatteryPlugged ? BATTERY_ICON_STYLE_CHARGE_DIGITAL	
                     : BATTERY_ICON_STYLE_NORMAL_DIGITAL;
+        } else if (mBatteryStyle == 6) {
+ 	    mIcon = (View.VISIBLE);
+ 	    mIconStyle = mBatteryPlugged ? BATTERY_ICON_STYLE_CHARGE_FAT	
+                    : BATTERY_ICON_STYLE_NORMAL_FAT;
         }
 
         int N = mIconViews.size();
