@@ -176,7 +176,7 @@ public class BatteryController extends BroadcastReceiver {
                     : BATTERY_ICON_STYLE_NORMAL_FAT;
         } else if (mBatteryStyle == 7) {
  	    mIcon = (View.VISIBLE);
- 	    mIconStyle = mBatteryPlugged ? BATTERY_ICON_STYLE_GEAR_CHARGE	
+ 	    mIconStyle = mBatteryPlugged ? BATTERY_ICON_STYLE_CHARGE_GEAR	
                     : BATTERY_ICON_STYLE_NORMAL_GEAR;
         }
 
