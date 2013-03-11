@@ -65,8 +65,8 @@ public class BatteryController extends BroadcastReceiver {
     private static final int BATTERY_ICON_STYLE_CHARGE_DIGITAL = R.drawable.stat_sys_battery_charge_digital;
     private static final int BATTERY_ICON_STYLE_NORMAL_FAT = R.drawable.stat_sys_battery_fat;
     private static final int BATTERY_ICON_STYLE_CHARGE_FAT = R.drawable.stat_sys_battery_charge;
-    private static final int BATTERY_ICON_STYLE_NORMAL_FAT = R.drawable.stat_sys_battery_gear;
-    private static final int BATTERY_ICON_STYLE_CHARGE_FAT = R.drawable.stat_sys_battery_gear_charge;
+    private static final int BATTERY_ICON_STYLE_NORMAL_GEAR = R.drawable.stat_sys_battery_gear;
+    private static final int BATTERY_ICON_STYLE_CHARGE_GEAR = R.drawable.stat_sys_battery_gear_charge;
 
     private static final int BATTERY_TEXT_STYLE_NORMAL  = R.string.status_bar_settings_battery_meter_format;
     private static final int BATTERY_TEXT_STYLE_MIN     = R.string.status_bar_settings_battery_meter_min_format;
