@@ -237,7 +237,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.PIE_GRAVITY), false, this);
+                    Settings.System.PIE_CONTROLS), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_TRIGGER), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -305,7 +305,6 @@ public abstract class BaseStatusBar extends SystemUI implements
         public PieControlsTouchListener() {
             orient = mPieControlPanel.getOrientation();
         }
-
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -431,6 +430,17 @@ public abstract class BaseStatusBar extends SystemUI implements
                 }
             }}, filter);
 
+        // Listen for PIE gravity
+        mContext.getContentResolver().registerContentObserver(
+            Settings.System.getUriFor(Settings.System.PIE_GRAVITY), false, new ContentObserver(new Handler()) {
+                @Override
+                public void onChange(boolean selfChange) {
+                    if (Settings.System.getInt(mContext.getContentResolver(),
+                            Settings.System.PIE_STICK, 1) == 0) {
+                        updatePieControls();
+                    }
+                }
+            });
 
         attachPie();
 
@@ -869,6 +879,7 @@ public abstract class BaseStatusBar extends SystemUI implements
             Log.e(TAG, "Failed to launch RecentAppsIntent", e);
         }
     }
+
     protected View.OnTouchListener mRecentsPreloadOnTouchListener = new View.OnTouchListener() {
         // additional optimization when we have software system buttons - start loading the recent
         // tasks on touch down
