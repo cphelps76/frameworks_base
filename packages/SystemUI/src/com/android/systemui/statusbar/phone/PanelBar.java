@@ -90,18 +90,6 @@ public class PanelBar extends FrameLayout {
         }
     }
 
-    /*
-     * ]0 < alpha < 1[
-     */
-    public void setBackgroundAlpha(float alpha) {
-        Drawable bg = getBackground();
-        if (bg == null)
-            return;
-
-        int a = (int) (alpha * 255);
-        bg.setAlpha(a);
-    }
-
     public float getBarHeight() {
         return getMeasuredHeight();
     }
