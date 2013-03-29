@@ -52,6 +52,7 @@ import java.util.TimeZone;
  * Digital clock for the status bar.
  */
 public class Clock extends TextView implements OnClickListener, OnLongClickListener {
+
     protected boolean mAttached;
     protected Calendar mCalendar;
     protected String mClockFormatString;
@@ -127,7 +128,6 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
             setOnLongClickListener(this);
         }
         updateSettings();
-
     }
 
     @Override
@@ -188,12 +188,12 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
         }
     };
 
-    final void updateClock() {
+    protected final void updateClock() {
         mCalendar.setTimeInMillis(System.currentTimeMillis());
         setText(getSmallTime());
     }
 
-    private final CharSequence getSmallTime() {
+    protected final CharSequence getSmallTime() {
         Context context = getContext();
         boolean b24 = DateFormat.is24HourFormat(context);
         int res;
@@ -262,10 +262,6 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
             }
         }
         return formatted;
-    }
-
-    private void updateParameters() {
-        mClockFormatString = null;
     }
 
     protected void updateSettings(){

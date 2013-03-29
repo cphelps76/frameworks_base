@@ -20,7 +20,6 @@ import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityManagerNative;
 import android.app.IActivityManager;
-import android.app.AppGlobals;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.app.UiModeManager;
@@ -55,7 +54,6 @@ import android.os.IRemoteCallback;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.Parcel;
 import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteException;
@@ -361,9 +359,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // Power button torch
     boolean mPowerButtonTorch;
     boolean mTorchOn;
-
-    // HW overlays state
-    int mDisableOverlays = 0;
 
     private static final class PointerLocationInputEventReceiver extends InputEventReceiver {
         private final PointerLocationView mView;
@@ -1025,42 +1020,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         });
     }
 
-    private int updateFlingerOptions() {
-        int disableOverlays = 0;
-        try {
-            IBinder flinger = ServiceManager.getService("SurfaceFlinger");
-            if (flinger != null) {
-                Parcel data = Parcel.obtain();
-                Parcel reply = Parcel.obtain();
-                data.writeInterfaceToken("android.ui.ISurfaceComposer");
-                flinger.transact(1010, data, reply, 0);
-                reply.readInt();
-                reply.readInt();
-                reply.readInt();
-                reply.readInt();
-                disableOverlays = reply.readInt();
-                reply.recycle();
-                data.recycle();
-            }
-        } catch (RemoteException ex) {
-        }
-        return disableOverlays;
-    }
-
-    private void writeDisableOverlaysOption(int state) {
-        try {
-            IBinder flinger = ServiceManager.getService("SurfaceFlinger");
-            if (flinger != null) {
-                Parcel data = Parcel.obtain();
-                data.writeInterfaceToken("android.ui.ISurfaceComposer");
-                data.writeInt(state);
-                flinger.transact(1008, data, null, 0);
-                data.recycle();
-            }
-        } catch (RemoteException ex) {
-        }
-    }
-
     /** {@inheritDoc} */
     public void init(Context context, IWindowManager windowManager,
             WindowManagerFuncs windowManagerFuncs) {
@@ -1077,55 +1036,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         try {
             mOrientationListener.setCurrentRotation(windowManager.getRotation());
         } catch (RemoteException ex) { }
-        mDisableOverlays = updateFlingerOptions();
         mSettingsObserver = new SettingsObserver(mHandler);
         mSettingsObserver.observe();
-
-        // Expanded desktop
-        mContext.getContentResolver().registerContentObserver(
-                Settings.System.getUriFor(Settings.System.EXPANDED_DESKTOP_STATE),
-                    false, new ContentObserver(new Handler()) {
-            @Override
-            public void onChange(boolean selfChange) {
-
-                boolean expDesktop = Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
-
-                if (!expDesktop) {
-                    // When leaving fullscreen switch back to original HW state
-                    int disableOverlays = updateFlingerOptions();
-                    if (disableOverlays != mDisableOverlays) writeDisableOverlaysOption(mDisableOverlays);
-                } else {
-                    // Before switching to fullscreen safe current HW state, then disable
-                    mDisableOverlays = updateFlingerOptions();
-                    writeDisableOverlaysOption(1);
-                }
-
-                if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_RESTART_LAUNCHER, 1) == 1) {
-                    // Restart default launcher activity
-                    final PackageManager mPm = mContext.getPackageManager();
-                    final ActivityManager am = (ActivityManager)mContext
-                            .getSystemService(Context.ACTIVITY_SERVICE);
-                    final Intent intent = new Intent(Intent.ACTION_MAIN); 
-                    intent.addCategory(Intent.CATEGORY_HOME); 
-                    final ResolveInfo res = mPm.resolveActivity(intent, 0);
-
-                    // Launcher is running task #1
-                    List<ActivityManager.RunningTaskInfo> runningTasks = am.getRunningTasks(1);
-                    if (runningTasks != null) {
-                        for (ActivityManager.RunningTaskInfo task : runningTasks) {
-                            String packageName = task.baseActivity.getPackageName();
-                            if (packageName.equals(res.activityInfo.packageName)) {
-                                closeApplication(packageName);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
         mShortcutManager = new ShortcutManager(context, mHandler);
         mShortcutManager.observe();
         mHomeIntent =  new Intent(Intent.ACTION_MAIN, null);
@@ -1392,16 +1304,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mHdmiRotation = mLandscapeRotation;
         }
         mHdmiRotationLock = SystemProperties.getBoolean("persist.demo.hdmirotationlock", true);
-    }
-
-    private void closeApplication(String packageName) {
-        try {
-            ActivityManagerNative.getDefault().killApplicationProcess(
-                    packageName, AppGlobals.getPackageManager().getPackageUid(
-                    packageName, UserHandle.myUserId()));
-        } catch (RemoteException e) {
-            // Good luck next time!
-        }
     }
 
     public void updateSettings() {
