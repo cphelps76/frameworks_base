@@ -55,10 +55,7 @@ import com.android.internal.statusbar.IStatusBarService;
 import com.android.systemui.R;
 
 import java.net.URISyntaxException;
-<<<<<<< HEAD
 import java.util.HashMap;
-=======
->>>>>>> parent of d4c08bd... Revert "PIE: this is an all inclusive commit for pie. Includes everything needed for pie'"
 import java.util.List;
 
 /*
@@ -93,7 +90,6 @@ public class AwesomeAction {
     public final static String ACTION_RECENTS_GB = "**recentsgb**";
     public final static String ACTION_NULL = "**null**";
 
-<<<<<<< HEAD
     public final static int INT_ACTION_HOME = 0;
     public final static int INT_ACTION_BACK = 1;
     public final static int INT_ACTION_SCREENSHOT = 2;
@@ -156,11 +152,6 @@ public class AwesomeAction {
     final private Context mContext;
     final private Handler mHandler;
     private AudioManager am;
-=======
-    private int mInjectKeyCode;
-    final private Context mContext;
-    final private Handler mHandler;
->>>>>>> parent of d4c08bd... Revert "PIE: this is an all inclusive commit for pie. Includes everything needed for pie'"
 
     final Object mScreenshotLock = new Object();
     ServiceConnection mScreenshotConnection = null;
@@ -177,16 +168,12 @@ public class AwesomeAction {
     public AwesomeAction(Context context) {
         mContext = context;
         mHandler = new Handler();
-<<<<<<< HEAD
         am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-=======
->>>>>>> parent of d4c08bd... Revert "PIE: this is an all inclusive commit for pie. Includes everything needed for pie'"
     }
 
     public boolean launchAction(String action) {
         if (action == null || action.equals(ACTION_NULL)) {
             return false;
-<<<<<<< HEAD
         }
 
         if (getActionMap().containsKey(action)) {
@@ -347,166 +334,6 @@ public class AwesomeAction {
             }
             return true;
         }
-=======
-        } else if (action.equals(ACTION_RECENTS)) {
-            try {
-                IStatusBarService.Stub.asInterface(
-                        ServiceManager.getService(Context.STATUS_BAR_SERVICE))
-                        .toggleRecentApps();
-            } catch (RemoteException e) {
-                // nuu
-            }
-            return true;
-        } else if (action.equals(ACTION_HOME)) {
-            injectKeyDelayed(KeyEvent.KEYCODE_HOME);
-            return true;
-        } else if (action.equals(ACTION_BACK)) {
-            injectKeyDelayed(KeyEvent.KEYCODE_BACK);
-            return true;
-        } else if (action.equals(ACTION_MENU)) {
-            injectKeyDelayed(KeyEvent.KEYCODE_MENU);
-            return true;
-        } else if (action.equals(ACTION_SEARCH)) {
-            injectKeyDelayed(KeyEvent.KEYCODE_SEARCH);
-            return true;
-        } else if (action.equals(ACTION_POWER)) {
-            injectKeyDelayed(KeyEvent.KEYCODE_POWER);
-            return true;
-        } else if (action.equals(ACTION_RECENTS_GB)) {
-            injectKeyDelayed(KeyEvent.KEYCODE_APP_SWITCH);
-            return true;
-        } else if (action.equals(ACTION_IME)) {
-            mContext.sendBroadcast(new Intent("android.settings.SHOW_INPUT_METHOD_PICKER"));
-            return true;
-        } else if (action.equals(ACTION_SCREENSHOT)) {
-            takeScreenshot();
-            return true;
-        } else if (action.equals(ACTION_TORCH)) {
-            Intent i = new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT");
-            i.putExtra("bright", false);
-            mContext.sendBroadcast(i);
-            return true;
-        } else if (action.equals(ACTION_TODAY)) {
-            long startMillis = System.currentTimeMillis();
-            Uri.Builder builder = CalendarContract.CONTENT_URI.buildUpon();
-            builder.appendPath("time");
-            ContentUris.appendId(builder, startMillis);
-            Intent intent = new Intent(Intent.ACTION_VIEW)
-                    .setData(builder.build());
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
-            return true;
-        } else if (action.equals(ACTION_CLOCKOPTIONS)) {
-            Intent intent = new Intent(Intent.ACTION_QUICK_CLOCK);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
-            return true;
-        } else if (action.equals(ACTION_EVENT)) {
-            Intent intent = new Intent(Intent.ACTION_INSERT)
-                    .setData(Events.CONTENT_URI);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
-            return true;
-        } else if (action.equals(ACTION_VOICEASSIST)) {
-            Intent intent = new Intent(RecognizerIntent.ACTION_WEB_SEARCH);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
-            return true;
-        } else if (action.equals(ACTION_ALARM)) {
-            Intent intent = new Intent(AlarmClock.ACTION_SET_ALARM);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
-            return true;
-        } else if (action.equals(ACTION_ASSIST)) {
-            Intent intent = new Intent(Intent.ACTION_ASSIST);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
-            return true;
-        } else if (action.equals(ACTION_KILL)) {
-            mHandler.post(mKillTask);
-            return true;
-        } else if (action.equals(ACTION_VIB)) {
-            AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-            if (am != null) {
-                if (am.getRingerMode() != AudioManager.RINGER_MODE_VIBRATE) {
-                    am.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-                    Vibrator vib = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
-                    if (vib != null) {
-                        vib.vibrate(50);
-                    }
-                } else {
-                    am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-                    ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION,
-                            (int) (ToneGenerator.MAX_VOLUME * 0.85));
-                    if (tg != null) {
-                        tg.startTone(ToneGenerator.TONE_PROP_BEEP);
-                    }
-                }
-            }
-            return true;
-        } else if (action.equals(ACTION_SILENT)) {
-            AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-            if (am != null) {
-                if (am.getRingerMode() != AudioManager.RINGER_MODE_SILENT) {
-                    am.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-                } else {
-                    am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-                    ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION,
-                            (int) (ToneGenerator.MAX_VOLUME * 0.85));
-                    if (tg != null) {
-                        tg.startTone(ToneGenerator.TONE_PROP_BEEP);
-                    }
-                }
-            }
-            return true;
-        } else if (action.equals(ACTION_SILENT_VIB)) {
-            AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-            if (am != null) {
-                if (am.getRingerMode() == AudioManager.RINGER_MODE_NORMAL) {
-                    am.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
-                    Vibrator vib = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
-                    if (vib != null) {
-                        vib.vibrate(50);
-                    }
-                } else if (am.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE) {
-                    am.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-                } else {
-                    am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-                    ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION,
-                            (int) (ToneGenerator.MAX_VOLUME * 0.85));
-                    if (tg != null) {
-                        tg.startTone(ToneGenerator.TONE_PROP_BEEP);
-                    }
-                }
-            }
-            return true;
-        } else if (action.equals(ACTION_NOTIFICATIONS)) {
-            try {
-                IStatusBarService.Stub.asInterface(
-                        ServiceManager.getService(Context.STATUS_BAR_SERVICE))
-                        .expandNotificationsPanel();
-            } catch (RemoteException e) {
-                // A RemoteException is like a cold
-                // Let's hope we don't catch one!
-            }
-            return true;
-        } else if (action.equals(ACTION_LAST_APP)) {
-            toggleLastApp();
-            return true;
-        }
-        // we must have a custom uri
-        try {
-            Intent intent = Intent.parseUri(action, 0);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
-            return true;
-        } catch (URISyntaxException e) {
-            Log.e(TAG, "URISyntaxException: [" + action + "]");
-        } catch (ActivityNotFoundException e) {
-            Log.e(TAG, "ActivityNotFound: [" + action + "]");
-        }
-        return false; // we didn't handle the action!
->>>>>>> parent of d4c08bd... Revert "PIE: this is an all inclusive commit for pie. Includes everything needed for pie'"
     }
 
     public String getProperSummary(String uri) {
