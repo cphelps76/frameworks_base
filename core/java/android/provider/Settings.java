@@ -3776,7 +3776,7 @@ public final class Settings {
          */
         public static final String NOTIFICATION_SHOW_WIFI_SSID = "notification_show_wifi_ssid";
 
-         * Whether to enable notification shortcuts (toggle)
+         /* Whether to enable notification shortcuts (toggle)
          *
          * @hide
          */
