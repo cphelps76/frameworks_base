@@ -154,7 +154,6 @@ public class ToggleManager {
                 toggleMap.put(LTE_TOGGLE, LteToggle.class);
             }
             toggleMap.put(FAV_CONTACT_TOGGLE, FavoriteUserToggle.class);
-            toggleMap.put(SOUND_STATE_TOGGLE, SoundStateToggle.class);
             toggleMap.put(QUICKRECORD_TOGGLE, QuickRecordToggle.class);
             toggleMap.put(QUIETHOURS_TOGGLE, QuietHoursToggle.class);
             toggleMap.put(SLEEP_TOGGLE, SleepToggle.class);
