@@ -1703,9 +1703,6 @@
   <java-symbol type="string" name="enable_explore_by_touch_warning_title" />
   <java-symbol type="string" name="enable_explore_by_touch_warning_message" />
 
-  <!-- Turn wifi tether off -->
-  <java-symbol type="string" name="notify_turn_wifi_ap_off_title" />
-
   <java-symbol type="layout" name="resolver_grid" />
   <java-symbol type="id" name="resolver_grid" />
   <java-symbol type="id" name="button_once" />
