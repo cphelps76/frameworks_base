@@ -125,6 +125,7 @@ public class ToggleManager {
             toggleMap.put(AIRPLANE_TOGGLE, AirplaneModeToggle.class);
             toggleMap.put(BLUETOOTH_TOGGLE, BluetoothToggle.class);
             toggleMap.put(VIBRATE_TOGGLE, VibrateToggle.class);
+            toggleMap.put(SOUND_STATE_TOGGLE, SoundStateToggle.class);
             toggleMap.put(SILENT_TOGGLE, SilentToggle.class);
             toggleMap.put(SYNC_TOGGLE, SyncToggle.class);
             toggleMap.put(NFC_TOGGLE, NfcToggle.class);
