@@ -165,6 +165,7 @@ public class BatteryController extends BroadcastReceiver {
             sBatteryLevel = level;
             sBatteryCharging = plugged;
             updateCallbacks();
+            updateBattery();
         }
     }
 
