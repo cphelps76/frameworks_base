@@ -59,10 +59,10 @@ import com.android.internal.util.aokp.BackgroundAlphaColorDrawable;
 import com.android.internal.statusbar.IStatusBarService;
 import com.android.internal.util.aokp.NavBarHelpers;
 import com.android.systemui.R;
-import com.android.systemui.aokp.AokpTarget;
-import com.android.systemui.statusbar.policy.ExtensibleKeyButtonView;
 import com.android.systemui.TransparencyManager;
+import com.android.systemui.aokp.AwesomeAction;
 import com.android.systemui.statusbar.policy.KeyButtonView;
+import com.android.systemui.statusbar.policy.key.ExtensibleKeyButtonView;
 
 public class NavigationBarView extends LinearLayout implements BaseStatusBar.NavigationBarCallback {
     final static boolean DEBUG = false;
@@ -93,8 +93,6 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
 
     public DelegateViewHelper mDelegateHelper;
 
-    private AokpTarget mAokpTarget;
-
     private BaseStatusBar mBar;
     private SettingsObserver mSettingsObserver;
     private Context mContext;
@@ -124,6 +122,7 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
 
     public final static int StockButtonsQty = 3;
     public final static String[] StockClickActions = {
+
         AwesomeConstant.ACTION_BACK.value(),
         AwesomeConstant.ACTION_HOME.value(),
         AwesomeConstant.ACTION_RECENTS.value(),
@@ -261,7 +260,6 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
         mVertical = false;
         mShowMenu = false;
         mDelegateHelper = new DelegateViewHelper(this);
-        mAokpTarget = new AokpTarget(context);
         mBackIcon = NavBarHelpers.getIconImage(mContext, AwesomeConstant.ACTION_BACK.value());
         mBackAltIcon = ((KeyButtonView)generateKey(false, KEY_BACK_ALT)).getDrawable();
     }
@@ -295,6 +293,7 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
                         mLongpressActions[j],
                         mPortraitIcons[j]);
                 v.setTag((landscape ? "key_land_" : "key_") + j);
+//                v.setAokpTarget(mAokpTarget);
                 iconUri = mPortraitIcons[j];
                 if (iconUri != null && iconUri.length() > 0) {
                     // custom icon from the URI here
@@ -464,8 +463,8 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
             String iconUri) {
 
         final int iconSize = 80;
-        ExtensibleKeyButtonView v = new ExtensibleKeyButtonView(mContext, null, clickAction,
-                longpress);
+        ExtensibleKeyButtonView v = new ExtensibleKeyButtonView(mContext, null,
+                clickAction, longpress);
         v.setLayoutParams(getLayoutParams(landscape, iconSize));
         v.setGlowBackground(landscape ? R.drawable.ic_sysbar_highlight_land
                 : R.drawable.ic_sysbar_highlight);

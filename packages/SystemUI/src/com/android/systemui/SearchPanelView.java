@@ -87,9 +87,7 @@ import com.android.systemui.statusbar.CommandQueue;
 import com.android.systemui.statusbar.phone.PhoneStatusBar;
 import com.android.systemui.statusbar.tablet.StatusBarPanel;
 import com.android.systemui.statusbar.tablet.TabletStatusBar;
-import com.android.systemui.aokp.AokpTarget;
 import com.android.systemui.aokp.AwesomeAction;
-
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -110,8 +108,6 @@ public class SearchPanelView extends FrameLayout implements
     private View mSearchTargetsContainer;
     private GlowPadView mGlowPadView;
     private IWindowManager mWm;
-
-    private AokpTarget mAokpTarget;
 
     private PackageManager mPackageManager;
     private Resources mResources;
@@ -147,8 +143,6 @@ public class SearchPanelView extends FrameLayout implements
 
         mContentResolver = mContext.getContentResolver();
 
-        mAokpTarget = new AokpTarget(context);
-
         SettingsObserver observer = new SettingsObserver(new Handler());
         observer.observe();
         updateSettings();
@@ -172,9 +166,8 @@ public class SearchPanelView extends FrameLayout implements
                 if (!mSearchPanelLock) {
                     mSearchPanelLock = true;
                     mLongPress = true;
-                    mAokpTarget.launchAction(longList.get(mTarget));
-                    AwesomeAction.launchAction(mContext, longList.get(mTarget));
                     mBar.hideSearchPanel();
+                    AwesomeAction.launchAction(mContext, longList.get(mTarget));
                  }
             }
         };
@@ -209,15 +202,14 @@ public class SearchPanelView extends FrameLayout implements
         public void onTrigger(View v, final int target) {
             final int resId = mGlowPadView.getResourceIdForTarget(target);
             mTarget = target;
-            if (!mLongPress) {
-               mAokpTarget.launchAction(intentList.get(target));
-               mHandler.removeCallbacks(SetLongPress);
-            }
+                if (AwesomeConstant.ACTION_ASSIST.equals(intentList.get(target)));
+                mHandler.removeCallbacks(SetLongPress);
         }
 
         public void onFinishFinalAnimation() {
         }
     }
+
     final GlowPadTriggerListener mGlowPadViewListener = new GlowPadTriggerListener();
 
     @Override
