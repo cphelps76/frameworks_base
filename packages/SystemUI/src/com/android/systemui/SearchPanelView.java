@@ -20,6 +20,7 @@ import android.animation.LayoutTransition;
 import android.app.ActivityOptions;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.KeyguardManager;
 import android.app.SearchManager;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
@@ -111,6 +112,7 @@ public class SearchPanelView extends FrameLayout implements
 
     private PackageManager mPackageManager;
     private Resources mResources;
+    private SettingsObserver mSettingsObserver;
     private TargetObserver mTargetObserver;
     private ContentResolver mContentResolver;
     private String[] targetActivities = new String[5];
@@ -119,6 +121,7 @@ public class SearchPanelView extends FrameLayout implements
     private int startPosOffset;
 
     private int mNavRingAmount;
+    private int mCurrentUIMode;
     private boolean mLefty;
     private boolean mBoolLongPress;
     private boolean mSearchPanelLock;
@@ -142,11 +145,62 @@ public class SearchPanelView extends FrameLayout implements
         mResources = mContext.getResources();
 
         mContentResolver = mContext.getContentResolver();
-
-        SettingsObserver observer = new SettingsObserver(new Handler());
-        observer.observe();
+        mSettingsObserver = new SettingsObserver(new Handler());
         updateSettings();
+    }
 
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        mSettingsObserver.observe();
+        updateSettings();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        mContentResolver.unregisterContentObserver(mSettingsObserver);
+        super.onDetachedFromWindow();
+    }
+
+    private void startAssistActivity() {
+        if (!mBar.isDeviceProvisioned()) return;
+
+        maybeSkipKeyguard();
+        // Close Recent Apps if needed
+        mBar.animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_SEARCH_PANEL);
+        boolean isKeyguardShowing = false;
+        try {
+            isKeyguardShowing = mWm.isKeyguardLocked();
+        } catch (RemoteException e) {
+
+        }
+
+        if (isKeyguardShowing) {
+            // Have keyguard show the bouncer and launch the activity if the user succeeds.
+            try {
+                mWm.showAssistant();
+            } catch (RemoteException e) {
+                // too bad, so sad...
+            }
+            onAnimationStarted();
+        } else {
+            // Otherwise, keyguard isn't showing so launch it from here.
+            Intent intent = ((SearchManager) mContext.getSystemService(Context.SEARCH_SERVICE))
+                    .getAssistIntent(mContext, UserHandle.USER_CURRENT);
+            if (intent == null) return;
+
+            try {
+                ActivityOptions opts = ActivityOptions.makeCustomAnimation(mContext,
+                        R.anim.search_launch_enter, R.anim.search_launch_exit,
+                        getHandler(), this);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                mContext.startActivityAsUser(intent, opts.toBundle(),
+                        new UserHandle(UserHandle.USER_CURRENT));
+            } catch (ActivityNotFoundException e) {
+                Slog.w(TAG, "Activity not found for " + intent.getAction());
+                onAnimationStarted();
+            }
+        }
     }
 
     private class H extends Handler {
@@ -166,8 +220,9 @@ public class SearchPanelView extends FrameLayout implements
                 if (!mSearchPanelLock) {
                     mSearchPanelLock = true;
                     mLongPress = true;
-                    mBar.hideSearchPanel();
+                    maybeSkipKeyguard();
                     AwesomeAction.launchAction(mContext, longList.get(mTarget));
+                    mBar.hideSearchPanel();
                  }
             }
         };
@@ -200,10 +255,14 @@ public class SearchPanelView extends FrameLayout implements
         }
 
         public void onTrigger(View v, final int target) {
-            final int resId = mGlowPadView.getResourceIdForTarget(target);
             mTarget = target;
             if (!mLongPress) {
-                AwesomeAction.launchAction(mContext, longList.get(mTarget));
+                if (AwesomeConstant.ACTION_ASSIST.equals(intentList.get(target))) {
+                    startAssistActivity();
+                } else {
+                    maybeSkipKeyguard();
+                    AwesomeAction.launchAction(mContext, intentList.get(target));
+                }
                 mHandler.removeCallbacks(SetLongPress);
             }
         }
@@ -238,6 +297,12 @@ public class SearchPanelView extends FrameLayout implements
         setDrawables();
     }
 
+    private void maybeSkipKeyguard() {
+        Intent u = new Intent();
+        u.setAction("com.android.lockscreen.ACTION_UNLOCK_RECEIVER");
+        mContext.sendBroadcastAsUser(u, UserHandle.ALL);
+    }
+
     private void setDrawables() {
         mLongPress = false;
         mSearchPanelLock = false;
@@ -250,25 +315,34 @@ public class SearchPanelView extends FrameLayout implements
         // Custom Targets
         ArrayList<TargetDrawable> storedDraw = new ArrayList<TargetDrawable>();
 
-        int endPosOffset;
+        int endPosOffset = 0;
         int middleBlanks = 0;
 
-         if (screenLayout() == Configuration.SCREENLAYOUT_SIZE_LARGE || isScreenPortrait()) {
-             startPosOffset =  1;
-             endPosOffset =  (mNavRingAmount) + 1;
-         } else {
-            // next is landscape for lefty navbar is on left
-                if (mLefty) {
-                    startPosOffset =  1 - (mNavRingAmount % 2);
-                    middleBlanks = mNavRingAmount + 2;
-                    endPosOffset = 0;
+        switch (mCurrentUIMode) {
+            case 0 : // Phone Mode
+                if (isScreenPortrait()) { // NavRing on Bottom
+                    startPosOffset =  1;
+                    endPosOffset =  (mNavRingAmount) + 1;
+                } else if (mLefty) { // either lefty or... (Ring is actually on right side of screen)
+                        startPosOffset =  1 - (mNavRingAmount % 2);
+                        middleBlanks = mNavRingAmount + 2;
+                        endPosOffset = 0;
 
-                } else {
-                //lastly the standard landscape with navbar on right
+                } else { // righty... (Ring actually on left side of tablet)
                     startPosOffset =  (Math.min(1,mNavRingAmount / 2)) + 2;
                     endPosOffset =  startPosOffset - 1;
                 }
-        }
+                break;
+            case 1 : // Tablet Mode
+                if (mLefty) { // either lefty or... (Ring is actually on right side of screen)
+                    startPosOffset =  (mNavRingAmount) + 1;
+                    endPosOffset =  (mNavRingAmount *2) + 1;
+                } else { // righty... (Ring actually on left side of tablet)
+                    startPosOffset =  1;
+                    endPosOffset = (mNavRingAmount * 3) + 1;
+                }
+                break;
+         } 
 
         intentList.clear();
         longList.clear();
@@ -523,14 +597,13 @@ public class SearchPanelView extends FrameLayout implements
                     Settings.System.SYSTEMUI_NAVRING_LONG_ENABLE), false, this);
 
             for (int i = 0; i < 5; i++) {
-	            resolver.registerContentObserver(
+                resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.SYSTEMUI_NAVRING[i]), false, this);
                 resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.SYSTEMUI_NAVRING_LONG[i]), false, this);
                 resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.SYSTEMUI_NAVRING_ICON[i]), false, this);
             }
-
         }
 
         @Override
@@ -559,5 +632,8 @@ public class SearchPanelView extends FrameLayout implements
 
         mNavRingAmount = Settings.System.getInt(mContext.getContentResolver(),
                          Settings.System.SYSTEMUI_NAVRING_AMOUNT, 1);
+        // Not using getBoolean here, because CURRENT_UI_MODE can be 0,1 or 2
+        mCurrentUIMode = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.CURRENT_UI_MODE, 0);
     }
 }
