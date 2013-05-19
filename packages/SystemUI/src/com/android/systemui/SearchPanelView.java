@@ -306,6 +306,8 @@ public class SearchPanelView extends FrameLayout implements
         if (action.equals(AwesomeConstant.ACTION_SILENT_VIB.value()) ||
             action.equals(AwesomeConstant.ACTION_VIB.value()) ||
             action.equals(AwesomeConstant.ACTION_POWER.value()) ||
+            action.equals(AwesomeConstant.ACTION_TORCH.value()) ||
+            action.equals(AwesomeConstant.ACTION_NOTIFICATIONS.value()) ||
             action.equals(AwesomeConstant.ACTION_SILENT.value())) {
             return false;
         }
@@ -357,6 +359,10 @@ public class SearchPanelView extends FrameLayout implements
                     startPosOffset =  1;
                     endPosOffset = (mNavRingAmount * 3) + 1;
                 }
+                break;
+            case 2 : // Phablet Mode - Search Ring stays at bottom
+                startPosOffset =  1;
+                endPosOffset =  (mNavRingAmount) + 1;
                 break;
          } 
 
@@ -568,12 +574,6 @@ public class SearchPanelView extends FrameLayout implements
     public boolean isAssistantAvailable() {
         return ((SearchManager) mContext.getSystemService(Context.SEARCH_SERVICE))
                 .getAssistIntent(mContext, UserHandle.USER_CURRENT) != null;
-    }
-
-    public int screenLayout() {
-        final int screenSize = Resources.getSystem().getConfiguration().screenLayout &
-                Configuration.SCREENLAYOUT_SIZE_MASK;
-        return screenSize;
     }
 
     public boolean isScreenPortrait() {
