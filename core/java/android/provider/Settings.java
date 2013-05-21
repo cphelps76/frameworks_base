@@ -3767,6 +3767,10 @@ public final class Settings {
          */
         public static final String STATUS_BAR_COLOR = "status_bar_color";
 
+        /**
+         * @hide
+         */
+        public static final String LOCKSCREEN_ALPHA_CONFIG = "lockscreen_alpha_config";
     }
 
     /**
