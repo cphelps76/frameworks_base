@@ -3459,6 +3459,11 @@ public final class Settings {
         public static final String LOCKSCREEN_HIDE_INITIAL_PAGE_HINTS = "lockscreen_hide_initial_page_hints";
 
         /**
+         * @hide
+         */
+        public static final String LOCKSCREEN_ALPHA_CONFIG = "lockscreen_alpha_config";
+
+        /**
          * enabled and order of quick toggles
          * 
          * @hide
