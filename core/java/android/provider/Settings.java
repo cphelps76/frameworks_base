@@ -3544,6 +3544,12 @@ public final class Settings {
          */
         public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
 
+        /**
+         * Give missed call notifications a breathing effect
+         * @hide
+         */
+        public static final String MISSED_CALL_BREATH = "missed_call_breath";
+
          /**
          * Volume key controls ringtone or media sound stream
          *
