@@ -3551,10 +3551,10 @@ public final class Settings {
         public static final String MISSED_CALL_BREATH = "missed_call_breath";
 
         /**
-         * Give missed call notifications a breathing effect
+         * Give MMS Notifications a breathing effect
          * @hide
          */
-        public static final String SMS_BREATH = "sms_breath";
+        public static final String MMS_BREATH = "mms_breath";
 
          /**
          * Volume key controls ringtone or media sound stream
