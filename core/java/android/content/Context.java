@@ -1740,6 +1740,9 @@ public abstract class Context {
      *  <dt> {@link #ALARM_SERVICE} ("alarm")
      *  <dd> A {@link android.app.AlarmManager} for receiving intents at the
      *  time of your choosing.
+     *  <dt> {@link #IRDA_SERVICE} ("irda")
+     *  <dd> A {@link android.hardware.IrdaManager} for sending IR codes
+     *  with the IR emitter
      *  <dt> {@link #NOTIFICATION_SERVICE} ("notification")
      *  <dd> A {@link android.app.NotificationManager} for informing the user
      *   of background events.
@@ -1787,6 +1790,8 @@ public abstract class Context {
      * @see android.os.PowerManager
      * @see #ALARM_SERVICE
      * @see android.app.AlarmManager
+     * @see #IRDA_SERVICE
+     * @see android.hardware.IrdaManager
      * @see #NOTIFICATION_SERVICE
      * @see android.app.NotificationManager
      * @see #KEYGUARD_SERVICE
@@ -1879,6 +1884,16 @@ public abstract class Context {
     public static final String ALARM_SERVICE = "alarm";
 
     /**
+     * Use with {@link #getSystemService} to retrieve a
+     * {@link android.hardware.IrdaManager} for sending IR codes	1888
+     * with the IR emitter	1889
+     *	1890
+     * @see #getSystemService	1891
+     * @see android.hardware.IrdaManager	1892
+     */
+    public static final String IRDA_SERVICE = "irda";
+
+    /**	1896
      * Use with {@link #getSystemService} to retrieve a
      * {@link android.app.NotificationManager} for informing the user of
      * background events.
