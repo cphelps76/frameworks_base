@@ -2957,21 +2957,8 @@ public final class Settings {
          * @hide
          */
         public static final String EXPANDED_DESKTOP_STATUS_BAR_STATE = "expanded_desktop_status_bar_state";
-
-        /**
-         * Whether Status bar should be hiidden when there are no
-         * notifications
-         * @hide
-         */
-        public static final String AUTO_HIDE_STATUSBAR = "auto_hide_statusbar";
-
-        /**
-         * Whether Status Bar is currently hidden or not
-         * @hide
-         */
-        public static final String HIDE_STATUSBAR = "hide_statusbar";
-
-        /** 
+         
+         /** 
          * Expanded desktop style (with status bar or without status bar)
          * @hide
          */
