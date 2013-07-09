@@ -1774,6 +1774,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mHasNavigationBar = showNavBarNow;
             if (updateDisplayMetrics) {
                 updateDisplayMetrics();
+            }
         }
     }
 
