@@ -2960,6 +2960,19 @@ public final class Settings {
         public static final String EXPANDED_DESKTOP_MODE = "expanded_desktop_mode";
 
         /**
+         * Whether Status bar should be hiidden when there are no
+         * notifications
+         * @hide
+         */
+        public static final String AUTO_HIDE_STATUSBAR = "auto_hide_statusbar";
+
+        /**
+         * Whether Status Bar is currently hidden or not
+         * @hide
+         */
+        public static final String HIDE_STATUSBAR = "hide_statusbar":
+
+        /**
          * Whether to use a separate delay for "slide to unlock" and security
          * lock
          * @hide
