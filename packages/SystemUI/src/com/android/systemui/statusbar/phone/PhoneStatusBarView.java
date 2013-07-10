@@ -205,7 +205,7 @@ public class PhoneStatusBarView extends PanelBar {
         mBar.updatePieTriggerMask(Position.LEFT.FLAG
                 | Position.TOP.FLAG
                 | Position.RIGHT.FLAG
-                | Position.TOP.FLAG);;
+                | Position.TOP.FLAG);
 
         Settings.System.putInt(mContext.getContentResolver(),
             Settings.System.TOGGLE_NOTIFICATION_SHADE, 0);
