@@ -3658,10 +3658,11 @@ public final class Settings {
           * 7 - In-App Search
           * 8 - Power Off
           * 9 - Notification shade toggle
-          * 10 - Expanded desktop toggle
-          * 11 - Kill App
-          * 12 - Last App
-          * 13 - Custom App
+          * 10 - Torch
+          * 11 - Expanded desktop toggle
+          * 12 - Kill App
+          * 13 - Last App
+          * 14 - Custom App
           * @hide
           */
 

@@ -225,10 +225,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int KEY_ACTION_IN_APP_SEARCH = 7;
     private static final int KEY_ACTION_POWER = 8;
     private static final int KEY_ACTION_NOTIFICATIONS = 9;
-    private static final int KEY_ACTION_EXPANDED = 10;
-    private static final int KEY_ACTION_KILL_APP = 11;
-    private static final int KEY_ACTION_LAST_APP = 12;
-    private static final int KEY_ACTION_CUSTOM_APP = 13;
+    private static final int KEY_ACTION_TORCH = 10;
+    private static final int KEY_ACTION_EXPANDED = 11;
+    private static final int KEY_ACTION_KILL_APP = 12;
+    private static final int KEY_ACTION_LAST_APP = 13;
+    private static final int KEY_ACTION_CUSTOM_APP = 14;
 
     // Masks for checking presence of hardware keys.
     // Must match values in core/res/res/values/config.xml
@@ -1140,6 +1141,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         mStatusBarService = null;
                     }
                     break;
+                case KEY_ACTION_TORCH:
+                    Intent intentTorch = new Intent("android.intent.action.MAIN");
+                    intentTorch.setComponent(ComponentName.unflattenFromString("com.aokp.Torch/.TorchActivity"));
+                    intentTorch.addCategory("android.intent.category.LAUNCHER");
+                    intentTorch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mContext.startActivity(intentTorch);
+                    break;
                 case KEY_ACTION_EXPANDED:
                     if (mExpandedState == 0 && mExpandedMode == 0) {
                         // Expanded desktop is going to turn on, default to 2 since
@@ -1159,6 +1167,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     break;
                 default:
                     break;
+
             }
         } catch (NumberFormatException e) {
             try {
