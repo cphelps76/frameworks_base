@@ -745,20 +745,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.KEY_APP_SWITCH_LONG_PRESS_ACTION), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HARDWARE_KEY_REBINDING), false, this);
-<<<<<<< HEAD
-
-=======
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BAR_HEIGHT), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BAR_HEIGHT_LANDSCAPE), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BAR_WIDTH), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIDE_STATUSBAR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.TOGGLE_NOTIFICATION_SHADE), false, this);
->>>>>>> d8ab908... Frameworks: Ehance toggleNotificationShade feature
             updateSettings();
         }
 
