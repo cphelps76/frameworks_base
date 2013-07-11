@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -311,7 +312,11 @@ public class KeyguardViewManager {
 
     private boolean runAction(Context context, String uri) {
         if ("FLASHLIGHT".equals(uri)) {
-            context.sendBroadcast(new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT"));
+            Intent intentTorch = new Intent("android.intent.action.MAIN");
+            intentTorch.setComponent(ComponentName.unflattenFromString("com.aokp.Torch/.TorchActivity"));
+            intentTorch.addCategory("android.intent.category.LAUNCHER");
+            intentTorch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intentTorch);
             return true;
         } else if ("NEXT".equals(uri)) {
             sendMediaButtonEvent(context, KeyEvent.KEYCODE_MEDIA_NEXT);
