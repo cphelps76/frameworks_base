@@ -167,6 +167,8 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     // Pie Control
     protected int mExpandedDesktopState;
+    protected int mExpandedValue;
+    protected int mExpanded;
     protected PieController mPieController;
     protected PieLayout mPieContainer;
     private int mPieTriggerSlots;
@@ -1363,8 +1365,6 @@ public abstract class BaseStatusBar extends SystemUI implements
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.PIE_GRAVITY), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.EXPANDED_DESKTOP_STATE), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.EXPANDED_DESKTOP_STYLE), false, this);
         }
 
@@ -1375,9 +1375,19 @@ public abstract class BaseStatusBar extends SystemUI implements
             mPieTriggerSlots = Settings.System.getInt(resolver,
                     Settings.System.PIE_GRAVITY, Position.BOTTOM.FLAG);
 
-            boolean expanded = Settings.System.getInt(resolver,
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
-            if (expanded) {
+            int mExpandedValue = Settings.System.getInt(resolver,
+                        Settings.System.EXPANDED_DESKTOP_MODE, 0);
+            if (mExpandedValue == 0) {
+                Settings.System.putInt(resolver,
+                        Settings.System.EXPANDED_DESKTOP_STYLE, 0);
+            } else {
+                Settings.System.putInt(resolver,
+                        Settings.System.EXPANDED_DESKTOP_STYLE, 1);
+            }
+
+            int mExpanded = Settings.System.getInt(resolver,
+                        Settings.System.EXPANDED_DESKTOP_MODE, 0);
+            if (mExpanded != 0 ) {
                 mExpandedDesktopState = Settings.System.getInt(resolver,
                         Settings.System.EXPANDED_DESKTOP_STYLE, 0);
             } else {
