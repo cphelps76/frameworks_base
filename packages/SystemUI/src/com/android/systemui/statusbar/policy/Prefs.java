@@ -37,7 +37,6 @@ public class Prefs {
     public static SharedPreferences.Editor edit(Context context) {
         return context.getSharedPreferences(Prefs.SHARED_PREFS_NAME, Context.MODE_PRIVATE).edit();
     }
-}
 
     public static void setLastBatteryLevel(Context context, int level) {
         edit(context).putInt(LAST_BATTERY_LEVEL, level).commit();
