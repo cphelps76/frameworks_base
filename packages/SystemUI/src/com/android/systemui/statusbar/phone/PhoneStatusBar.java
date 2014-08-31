@@ -243,6 +243,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     private boolean mQuickAccessLayoutLinked = true;
     private QuickSettingsHorizontalScrollView mRibbonView;
     private QuickSettingsController mRibbonQS;
+    private ShitChangedObserver mShitChangedObserver;
 
     // top bar
     View mNotificationPanelHeader;
@@ -372,12 +373,16 @@ public class PhoneStatusBar extends BaseStatusBar {
                     Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.SCREEN_BRIGHTNESS_MODE), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NOTIF_ALPHA), false, this);
             update();
+            setNotificationWallpaperHelper();
         }
 
         @Override
         public void onChange(boolean selfChange) {
             update();
+            setNotificationWallpaperHelper();
         }
 
         public void update() {
@@ -847,6 +852,9 @@ public class PhoneStatusBar extends BaseStatusBar {
                 mRibbonView = null;
                 inflateRibbon();
             }
+            // Start observing for shit that changes
+            mShitChangedObserver = new ShitChangedObserver(mHandler);
+            mShitChangedObserver.startObserving();
         }
 
         mClingShown = ! (DEBUG_CLINGS
@@ -1469,7 +1477,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 })
                 .start();
         }
-
+        setNotificationWallpaperHelper();
         updateCarrierLabelVisibility(false);
     }
 
@@ -3248,6 +3256,25 @@ public class PhoneStatusBar extends BaseStatusBar {
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_RIBBON_TILES),
                     false, this, UserHandle.USER_ALL);
+        }
+    }
+
+    /**
+     * ContentObserver to watch for notification wallpaper/alpha and other shit
+     * @author cphelps76
+     */
+    private class ShitChangedObserver extends ContentObserver {
+        public ShitChangedObserver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            setNotificationWallpaperHelper();
+        }
+
+        public void startObserving() {
+            final ContentResolver cr = mContext.getContentResolver();
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.NOTIF_WALLPAPER_ALPHA),
