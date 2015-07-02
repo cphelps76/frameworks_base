@@ -2631,6 +2631,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             loadIntegerSetting(stmt, Settings.System.QS_QUICK_PULLDOWN,
                     R.integer.def_qs_quick_pulldown);
 
+            loadBooleanSetting(stmt, Settings.System.SHOW_4G_FOR_LTE,
+                    R.bool.def_show_4g_for_lte);
+
         } finally {
             if (stmt != null) stmt.close();
         }

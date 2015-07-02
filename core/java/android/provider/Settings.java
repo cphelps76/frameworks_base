@@ -3131,6 +3131,13 @@ public final class Settings {
         public static final String STYLUS_ICON_ENABLED = "stylus_icon_enabled";
 
         /**
+         * Config for showing LTE for 4g
+         *
+         * @hide
+         */
+        public static final String SHOW_4G_FOR_LTE = "show_4g_for_lte";
+
+        /**
          * Enable Stylus Gestures
          *
          * @hide
