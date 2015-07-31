@@ -23,10 +23,12 @@ import static android.net.NetworkCapabilities.TRANSPORT_ETHERNET;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.database.ContentObserver;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
@@ -142,6 +144,8 @@ public class NetworkControllerImpl extends BroadcastReceiver
     // The current user ID.
     private int mCurrentUserId;
 
+    private static boolean mShow4g;
+    private UpdateUIListener mUpdateUIListener = null;
     /**
      * Construct this controller object and register for updates.
      */
@@ -152,6 +156,9 @@ public class NetworkControllerImpl extends BroadcastReceiver
                 SubscriptionManager.from(context), Config.readConfig(context),
                 new AccessPointControllerImpl(context), new MobileDataControllerImpl(context));
         registerListeners();
+
+        SettingsObserver settingsObserver = new SettingsObserver(new Handler());
+        settingsObserver.observe();
     }
 
     @VisibleForTesting
@@ -666,6 +673,11 @@ public class NetworkControllerImpl extends BroadcastReceiver
         for (int i = 0; i < length; i++) {
             mCarrierListeners.get(i).setCarrierLabel(label);
         }
+
+        // Update the dependency UI
+        if (mUpdateUIListener != null) {
+            mUpdateUIListener.onUpdateUI();
+        }
     }
 
     private boolean isMobileDataConnected() {
@@ -1026,6 +1038,7 @@ public class NetworkControllerImpl extends BroadcastReceiver
         private SignalStrength mSignalStrength;
         private MobileIconGroup mDefaultIcons;
         private Config mConfig;
+        private static NetworkControllerImpl mNCI;
 
         // TODO: Reduce number of vars passed in, if we have the NetworkController, probably don't
         // need listener lists anymore.
@@ -1044,6 +1057,9 @@ public class NetworkControllerImpl extends BroadcastReceiver
             mNetworkNameSeparator = getStringIfExists(R.string.status_bar_network_name_separator);
             mNetworkNameDefault = getStringIfExists(
                     com.android.internal.R.string.lockscreen_carrier_default);
+            mNCI = networkController;
+            mNCI.mShow4g = (Settings.System.getInt(context.getContentResolver(),
+                    Settings.System.SHOW_4G_FOR_LTE, 0) == 1);
 
             mapIconSets();
 
@@ -1183,7 +1199,7 @@ public class NetworkControllerImpl extends BroadcastReceiver
             mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_HSPA, hGroup);
             mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_HSPAP, TelephonyIcons.HP);
 
-            if (mConfig.show4gForLte) {
+            if (mNCI.mShow4g) {
                 mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_LTE, TelephonyIcons.FOUR_G);
             } else {
                 mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_LTE, TelephonyIcons.LTE);
@@ -1813,7 +1829,6 @@ public class NetworkControllerImpl extends BroadcastReceiver
     static class Config {
         boolean showAtLeast3G = false;
         boolean alwaysShowCdmaRssi = false;
-        boolean show4gForLte = false;
         boolean hspaDataDistinguishable;
 
         static Config readConfig(Context context) {
@@ -1823,10 +1838,48 @@ public class NetworkControllerImpl extends BroadcastReceiver
             config.showAtLeast3G = res.getBoolean(R.bool.config_showMin3G);
             config.alwaysShowCdmaRssi =
                     res.getBoolean(com.android.internal.R.bool.config_alwaysUseCdmaRssi);
-            config.show4gForLte = res.getBoolean(R.bool.config_show4GForLTE);
             config.hspaDataDistinguishable =
                     res.getBoolean(R.bool.config_hspa_data_distinguishable);
             return config;
         }
+    }
+
+    class SettingsObserver extends ContentObserver {
+        SettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(Settings.System.getUriFor
+                    (Settings.System.SHOW_4G_FOR_LTE), false, this);
+            updateSettings();
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            updateSettings();
+        }
+    }
+
+    protected void updateSettings() {
+        ContentResolver resolver = mContext.getContentResolver();
+        mShow4g = Settings.System.getInt(resolver,
+                Settings.System.SHOW_4G_FOR_LTE, 0) == 1;
+        for (MobileSignalController mobileSignalController : mMobileSignalControllers.values()) {
+            mobileSignalController.mapIconSets();
+            mobileSignalController.updateTelephony();
+        }
+    }
+
+    /**
+     * Let others listen for UI updates in NetworkController.
+     */
+    public static interface UpdateUIListener {
+        void onUpdateUI();
+    }
+
+    public void setListener(UpdateUIListener listener) {
+        mUpdateUIListener = listener;
     }
 }
