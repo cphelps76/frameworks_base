@@ -266,7 +266,7 @@
     <bool name="def_spell_checker">true</bool>
 
     <!-- Default setting for showing the 4G indicator -->
-    <integer name="def_show_4g_for_lte">0</integer>
+    <bool name="def_show_4g_for_lte">false</bool>
 
     <!-- Default for Settings.System.SWAP_VOLUME_KEYS_ON_ROTATION -->
     <bool name="def_swap_volume_keys_on_rotation">false</bool>
