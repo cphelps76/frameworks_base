@@ -67,6 +67,7 @@
     <java-symbol type="integer" name="config_deviceHardwareWakeKeys" />
     <java-symbol type="bool" name="config_singleStageCameraKey" />
     <java-symbol type="integer" name="config_longPressOnMenuBehavior" />
+    <java-symbol type="integer" name="config_longPressOnAppSwitchBehavior" />
 
     <java-symbol type="string" name="global_action_reboot" />
     <java-symbol type="string" name="lockscreen_missing_sim_message_short" />
@@ -171,6 +172,9 @@
     <!-- Proximity check timeout -->
     <java-symbol type="integer" name="config_proximityCheckTimeout" />
 
+    <!-- Proximity check on screen on default -->
+    <java-symbol type="bool" name="config_proximityCheckOnWakeEnabledByDefault" />
+
     <!-- Developer settings - Kill app back press -->
     <java-symbol type="string" name="app_killed_message" />
 
@@ -181,6 +185,7 @@
     <java-symbol type="bool" name="config_hasRemovableLid" />
 
     <!-- Notification and battery light -->
+    <java-symbol type="bool" name="config_adjustableNotificationLedBrightness" />
     <java-symbol type="bool" name="config_intrusiveNotificationLed" />
     <java-symbol type="bool" name="config_multiColorNotificationLed" />
     <java-symbol type="bool" name="config_intrusiveBatteryLed" />
@@ -349,4 +354,7 @@
 
     <!-- LED pulse -->
     <java-symbol type="bool" name="config_ledCanPulse" />
+
+    <!-- Non-themeable packages -->
+    <java-symbol type="array" name="non_themeable_packages" />
 </resources>
