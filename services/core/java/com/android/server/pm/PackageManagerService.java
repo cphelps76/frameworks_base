@@ -40,6 +40,7 @@ import static android.content.pm.PackageManager.INSTALL_FAILED_INVALID_APK;
 import static android.content.pm.PackageManager.INSTALL_FAILED_INVALID_INSTALL_LOCATION;
 import static android.content.pm.PackageManager.INSTALL_FAILED_MISSING_SHARED_LIBRARY;
 import static android.content.pm.PackageManager.INSTALL_FAILED_PACKAGE_CHANGED;
+import static android.content.pm.PackageManager.INSTALL_FAILED_REGION_LOCKED_PREBUNDLE;
 import static android.content.pm.PackageManager.INSTALL_FAILED_REPLACE_COULDNT_DELETE;
 import static android.content.pm.PackageManager.INSTALL_FAILED_SHARED_USER_INCOMPATIBLE;
 import static android.content.pm.PackageManager.INSTALL_FAILED_TEST_ONLY;
@@ -63,6 +64,7 @@ import static com.android.internal.util.ArrayUtils.appendInt;
 import static com.android.internal.util.ArrayUtils.removeInt;
 
 import android.app.PackageInstallObserver;
+import android.content.res.Configuration;
 import android.util.ArrayMap;
 
 import com.android.internal.R;
@@ -286,6 +288,7 @@ public class PackageManagerService extends IPackageManager.Stub {
     private static final boolean DEBUG_VERIFY = false;
     private static final boolean DEBUG_DEXOPT = false;
     private static final boolean DEBUG_ABI_SELECTION = false;
+    private static final boolean DEBUG_PREBUNDLED_SCAN = false;
 
     private static final int RADIO_UID = Process.PHONE_UID;
     private static final int LOG_UID = Process.LOG_UID;
@@ -453,6 +456,8 @@ public class PackageManagerService extends IPackageManager.Stub {
 
     final Settings mSettings;
     boolean mRestoredSettings;
+
+    private Resources mCustomResources;
 
     // System configuration read by SystemConfig.
     final int[] mGlobalGids;
@@ -1504,10 +1509,13 @@ public class PackageManagerService extends IPackageManager.Stub {
             mFoundPolicyFile = SELinuxMMAC.readInstallPolicy();
 
             mRestoredSettings = mSettings.readLPw(this, sUserManager.getUsers(false),
-                    mSdkVersion, mOnlyCore);
+                    mSdkVersion, mOnlyCore, mInstaller);
 
-            String customResolverActivity = Resources.getSystem().getString(
-                    R.string.config_customResolverActivity);
+            String customResolverActivity = SystemProperties.get("ro.custom.resolver.activity");
+            if (TextUtils.isEmpty(customResolverActivity)) {
+                customResolverActivity = Resources.getSystem().getString(
+                        R.string.config_customResolverActivity);
+            }
             if (TextUtils.isEmpty(customResolverActivity)) {
                 customResolverActivity = null;
             } else {
@@ -1660,24 +1668,24 @@ public class PackageManagerService extends IPackageManager.Stub {
             // overlay packages if they reside in VENDOR_OVERLAY_DIR.
             File vendorOverlayDir = new File(VENDOR_OVERLAY_DIR);
             scanDirLI(vendorOverlayDir, PackageParser.PARSE_IS_SYSTEM
-                    | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags | SCAN_TRUSTED_OVERLAY, 0);
+                    | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags | SCAN_TRUSTED_OVERLAY, 0, null);
 
             // Find base frameworks (resource packages without code).
             scanDirLI(frameworkDir, PackageParser.PARSE_IS_SYSTEM
                     | PackageParser.PARSE_IS_SYSTEM_DIR
                     | PackageParser.PARSE_IS_PRIVILEGED,
-                    scanFlags | SCAN_NO_DEX, 0);
+                    scanFlags | SCAN_NO_DEX, 0, null);
 
             // Collected privileged system packages.
             final File privilegedAppDir = new File(Environment.getRootDirectory(), "priv-app");
             scanDirLI(privilegedAppDir, PackageParser.PARSE_IS_SYSTEM
                     | PackageParser.PARSE_IS_SYSTEM_DIR
-                    | PackageParser.PARSE_IS_PRIVILEGED, scanFlags, 0);
+                    | PackageParser.PARSE_IS_PRIVILEGED, scanFlags, 0, null);
 
             // Collect ordinary system packages.
             final File systemAppDir = new File(Environment.getRootDirectory(), "app");
             scanDirLI(systemAppDir, PackageParser.PARSE_IS_SYSTEM
-                    | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0);
+                    | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0, null);
 
             // Collect all vendor packages.
             File vendorAppDir = new File("/vendor/app");
@@ -1687,16 +1695,19 @@ public class PackageManagerService extends IPackageManager.Stub {
                 // failed to look up canonical path, continue with original one
             }
             scanDirLI(vendorAppDir, PackageParser.PARSE_IS_SYSTEM
-                    | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0);
+                    | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0, null);
 
             // Collect all OEM packages.
             final File oemAppDir = new File(Environment.getOemDirectory(), "app");
             scanDirLI(oemAppDir, PackageParser.PARSE_IS_SYSTEM
-                    | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0);
+                    | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0, null);
 
             // Collect all prebundled packages.
+            createAndSetCustomResources();
             scanDirLI(Environment.getPrebundledDirectory(),
-                    PackageParser.PARSE_IS_PREBUNDLED_DIR, scanFlags, 0);
+                    PackageParser.PARSE_IS_PREBUNDLED_DIR, scanFlags, 0, UserHandle.OWNER);
+            // Clean up
+            mCustomResources = null;
 
             if (DEBUG_UPGRADE) Log.v(TAG, "Running installd update commands");
             mInstaller.moveFiles();
@@ -1772,10 +1783,10 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (!mOnlyCore) {
                 EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_PMS_DATA_SCAN_START,
                         SystemClock.uptimeMillis());
-                scanDirLI(mAppInstallDir, 0, scanFlags | SCAN_REQUIRE_KNOWN, 0);
+                scanDirLI(mAppInstallDir, 0, scanFlags | SCAN_REQUIRE_KNOWN, 0, null);
 
                 scanDirLI(mDrmAppPrivateInstallDir, PackageParser.PARSE_FORWARD_LOCK,
-                        scanFlags | SCAN_REQUIRE_KNOWN, 0);
+                        scanFlags | SCAN_REQUIRE_KNOWN, 0, null);
 
                 /**
                  * Remove disable package settings for any updated system
@@ -3349,6 +3360,17 @@ public class PackageManagerService extends IPackageManager.Stub {
                     return ri;
                 }
                 return mResolveInfo;
+            } else if (shouldIncludeResolveActivity(intent)) {
+                if (userId != 0) {
+                    ResolveInfo ri = new ResolveInfo(mResolveInfo);
+                    ri.activityInfo = new ActivityInfo(ri.activityInfo);
+                    ri.activityInfo.applicationInfo = new ApplicationInfo(
+                            ri.activityInfo.applicationInfo);
+                    ri.activityInfo.applicationInfo.uid = UserHandle.getUid(userId,
+                            UserHandle.getAppId(ri.activityInfo.applicationInfo.uid));
+                    return ri;
+                }
+                return mResolveInfo;
             }
         }
         return null;
@@ -3594,7 +3616,7 @@ public class PackageManagerService extends IPackageManager.Stub {
     private boolean shouldIncludeResolveActivity(Intent intent) {
         synchronized(mPackages) {
             AppSuggestManager suggest = AppSuggestManager.getInstance(mContext);
-            return (suggest != null) ? suggest.handles(intent) : false;
+            return mResolverReplaced && (suggest != null) ? suggest.handles(intent) : false;
         }
     }
 
@@ -3646,9 +3668,6 @@ public class PackageManagerService extends IPackageManager.Stub {
                 if (resolveInfo != null) {
                     result.add(resolveInfo);
                     Collections.sort(result, mResolvePrioritySorter);
-                }
-                if (result.size() == 0 && shouldIncludeResolveActivity(intent)) {
-                    result.add(mResolveInfo);
                 }
                 return result;
             }
@@ -4368,7 +4387,8 @@ public class PackageManagerService extends IPackageManager.Stub {
         return true;
     }
 
-    private void scanDirLI(File dir, int parseFlags, int scanFlags, long currentTime) {
+    private void scanDirLI(File dir, int parseFlags, int scanFlags, long currentTime,
+            UserHandle user) {
         final File[] files = dir.listFiles();
         if (ArrayUtils.isEmpty(files)) {
             Log.d(TAG, "No files in app dir " + dir);
@@ -4380,10 +4400,13 @@ public class PackageManagerService extends IPackageManager.Stub {
                     + " flags=0x" + Integer.toHexString(parseFlags));
         }
 
+        int prebundledUserId = user == null ? UserHandle.USER_OWNER : user.getIdentifier();
         boolean isPrebundled = (parseFlags & PackageParser.PARSE_IS_PREBUNDLED_DIR) != 0;
         if (isPrebundled) {
             synchronized (mPackages) {
-                mSettings.readPrebundledPackagesLPr();
+                if (DEBUG_PREBUNDLED_SCAN) Log.d(TAG, "Reading prebundled packages for user "
+                        + prebundledUserId);
+                mSettings.readPrebundledPackagesLPr(prebundledUserId);
             }
         }
 
@@ -4396,7 +4419,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
             try {
                 scanPackageLI(file, parseFlags | PackageParser.PARSE_MUST_BE_APK,
-                        scanFlags, currentTime, null);
+                        scanFlags, currentTime, user);
                 if (isPrebundled) {
                     final PackageParser.Package pkg;
                     try {
@@ -4405,7 +4428,16 @@ public class PackageManagerService extends IPackageManager.Stub {
                         throw PackageManagerException.from(e);
                     }
                     synchronized (mPackages) {
-                        mSettings.markPrebundledPackageInstalledLPr(pkg.packageName);
+                        if (DEBUG_PREBUNDLED_SCAN) Log.d(TAG,
+                                "Marking prebundled packages for user " + prebundledUserId);
+                        mSettings.markPrebundledPackageInstalledLPr(prebundledUserId,
+                                pkg.packageName);
+                        // do this for every other user
+                        for (UserInfo userInfo : sUserManager.getUsers(true)) {
+                            if (userInfo.id == prebundledUserId) continue;
+                            mSettings.markPrebundledPackageInstalledLPr(userInfo.id,
+                                    pkg.packageName);
+                        }
                     }
                 }
             } catch (PackageManagerException e) {
@@ -4425,7 +4457,9 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         if (isPrebundled) {
             synchronized (mPackages) {
-                mSettings.writePrebundledPackagesLPr();
+                if (DEBUG_PREBUNDLED_SCAN) Log.d(TAG, "Writing prebundled packages for user "
+                        + prebundledUserId);
+                mSettings.writePrebundledPackagesLPr(prebundledUserId);
             }
         }
     }
@@ -4529,12 +4563,19 @@ public class PackageManagerService extends IPackageManager.Stub {
         if ((parseFlags & PackageParser.PARSE_IS_PREBUNDLED_DIR) != 0) {
             synchronized (mPackages) {
                 PackageSetting existingSettings = mSettings.peekPackageLPr(pkg.packageName);
-                if (mSettings.wasPrebundledPackageInstalledLPr(pkg.packageName) &&
-                        existingSettings == null) {
+                if (mSettings.wasPrebundledPackageInstalledLPr(user.getIdentifier()
+                        , pkg.packageName) && existingSettings == null) {
                     // The prebundled app was installed at some point in time, but now it is
                     // gone.  Assume that the user uninstalled it intentionally: do not reinstall.
                     throw new PackageManagerException(INSTALL_FAILED_UNINSTALLED_PREBUNDLE,
                             "skip reinstall for " + pkg.packageName);
+                } else if (existingSettings == null &&
+                        !mSettings.shouldPrebundledPackageBeInstalled(mContext.getResources(),
+                                pkg.packageName, mCustomResources)) {
+                    // The prebundled app is not needed for the default mobile country code,
+                    // skip installing it
+                    throw new PackageManagerException(INSTALL_FAILED_REGION_LOCKED_PREBUNDLE,
+                            "skip install for " + pkg.packageName);
                 } else if (existingSettings != null
                         && existingSettings.versionCode >= pkg.mVersionCode
                         && !existingSettings.codePathString.contains(
@@ -6767,8 +6808,9 @@ public class PackageManagerService extends IPackageManager.Stub {
                             // Do not stop a pkg installation just because of one bad theme
                             // Also we don't break here because we should try to compile other
                             // themes
-                            Log.e(TAG, "Unable to compile " + themePkg.packageName
+                            Slog.w(TAG, "Unable to compile " + themePkg.packageName
                                     + " for target " + pkg.packageName, e);
+                            themePkg.mOverlayTargets.remove(pkg.packageName);
                         }
                     }
                 }
@@ -6781,9 +6823,10 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
 
             // Generate Idmaps and res tables if pkg is a theme
-            for(String target : pkg.mOverlayTargets) {
+            Iterator<String> iterator = pkg.mOverlayTargets.iterator();
+            while(iterator.hasNext()) {
+                String target = iterator.next();
                 Exception failedException = null;
-                int failReason = 0;
 
                 insertIntoOverlayMap(target, pkg);
                 if (isBootScan && mBootThemeConfig != null &&
@@ -6794,21 +6837,17 @@ public class PackageManagerService extends IPackageManager.Stub {
                         compileResourcesAndIdmapIfNeeded(mPackages.get(target), pkg);
                     } catch (IdmapException e) {
                         failedException = e;
-                        failReason = PackageManager.INSTALL_FAILED_THEME_IDMAP_ERROR;
                     } catch (AaptException e) {
                         failedException = e;
-                        failReason = PackageManager.INSTALL_FAILED_THEME_AAPT_ERROR;
                     } catch (Exception e) {
                         failedException = e;
-                        failReason = PackageManager.INSTALL_FAILED_THEME_UNKNOWN_ERROR;
                     }
 
                     if (failedException != null) {
-                        Log.w(TAG, "Unable to process theme " + pkgName, failedException);
-                        uninstallThemeForAllApps(pkg);
-                        deletePackageLI(pkg.packageName, null, true, null, null, 0, null, false);
-                        throw new PackageManagerException(failReason,
-                                "Unable to process theme " + pkgName, failedException);
+                        Slog.w(TAG, "Unable to process theme " + pkgName + " for " + target,
+                                failedException);
+                        // remove target from mOverlayTargets
+                        iterator.remove();
                     }
                 }
             }
@@ -6952,9 +6991,7 @@ public class PackageManagerService extends IPackageManager.Stub {
     }
 
     private void compileResourcesAndIdmapIfNeeded(PackageParser.Package targetPkg,
-                                               PackageParser.Package themePkg)
-            throws IdmapException, AaptException, IOException, Exception
-    {
+            PackageParser.Package themePkg) throws IdmapException, AaptException, IOException {
         if (!shouldCreateIdmap(targetPkg, themePkg)) {
             return;
         }
@@ -6972,7 +7009,7 @@ public class PackageManagerService extends IPackageManager.Stub {
     }
 
     private void compileResourcesIfNeeded(String target, PackageParser.Package pkg)
-        throws AaptException, IOException, Exception
+        throws AaptException, IOException
     {
         ThemeUtils.createCacheDirIfNotExists();
 
@@ -6987,7 +7024,8 @@ public class PackageManagerService extends IPackageManager.Stub {
         compileResources(target, pkg);
     }
 
-    private void compileResources(String target, PackageParser.Package pkg) throws Exception {
+    private void compileResources(String target, PackageParser.Package pkg)
+            throws IOException, AaptException {
         if (DEBUG_PACKAGE_SCANNING) Log.d(TAG, "  Compile resource table for " + pkg.packageName);
         //TODO: cleanup this hack. Modify aapt? Aapt uses the manifests package name
         //when creating the resource table. We care about the resource table's name because
@@ -7049,7 +7087,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         }
     }
 
-    private boolean hasCommonResources(PackageParser.Package pkg) throws Exception {
+    private boolean hasCommonResources(PackageParser.Package pkg) throws IOException {
         boolean ret = false;
         // check if assets/overlays/common exists in this theme
         AssetManager assets = new AssetManager();
@@ -7061,7 +7099,7 @@ public class PackageManagerService extends IPackageManager.Stub {
     }
 
     private void compileResourcesWithAapt(String target, PackageParser.Package pkg)
-            throws Exception {
+            throws IOException, AaptException {
         String internalPath = APK_PATH_TO_OVERLAY + target + File.separator;
         String resPath = ThemeUtils.getTargetCacheDir(target, pkg);
         final int sharedGid = UserHandle.getSharedAppGid(pkg.applicationInfo.uid);
@@ -7129,7 +7167,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         f.delete();
     }
 
-    private void createTempManifest(String pkgName) throws Exception {
+    private void createTempManifest(String pkgName) throws IOException {
         StringBuilder manifest = new StringBuilder();
         manifest.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         manifest.append("<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"");
@@ -13800,7 +13838,25 @@ public class PackageManagerService extends IPackageManager.Stub {
         ArrayMap<AsecInstallArgs, String> processCids = new ArrayMap<>();
         int[] uidArr = EmptyArray.INT;
 
-        final String[] list = PackageHelper.getSecureContainerList();
+        String[] list = PackageHelper.getSecureContainerList();
+        // In case external storage was ejected without unmounting, populate the list with all apps
+        // that are installed on external storage
+        if (!isMounted && ArrayUtils.isEmpty(list)) {
+            synchronized (mPackages) {
+                ArrayList<String> newList = new ArrayList<String>();
+                for (Map.Entry<String, Package> entry : mPackages.entrySet()) {
+                    final Package pkg = entry.getValue();
+                    if (isExternal(pkg.applicationInfo)) {
+                        String cid = cidFromCodePath(pkg.baseCodePath);
+                        newList.add(cid);
+                    }
+                }
+                if (!newList.isEmpty()) {
+                    list = newList.toArray(new String[newList.size()]);
+                }
+            }
+        }
+
         if (ArrayUtils.isEmpty(list)) {
             Log.i(TAG, "No secure containers found");
         } else {
@@ -14288,6 +14344,14 @@ public class PackageManagerService extends IPackageManager.Stub {
         if (mInstaller != null) {
             mInstaller.createUserConfig(userHandle);
             mSettings.createNewUserLILPw(this, mInstaller, userHandle, path);
+            // Set flag to monitor and not change apk file paths when
+            // scanning install directories.
+            final int scanFlags = SCAN_NO_PATHS | SCAN_DEFER_DEX | SCAN_BOOTING;
+            createAndSetCustomResources();
+            scanDirLI(Environment.getPrebundledDirectory(),
+                    PackageParser.PARSE_IS_PREBUNDLED_DIR, scanFlags, 0,
+                    new UserHandle(userHandle));
+            mCustomResources = null;
         }
     }
 
@@ -14703,29 +14767,26 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
         }
 
-        int errorCode = 0;
         // Generate Idmaps and res tables if pkg is a theme
-        for(String target : pkg.mOverlayTargets) {
+        Iterator<String> iterator = pkg.mOverlayTargets.iterator();
+        while(iterator.hasNext()) {
+            String target = iterator.next();
             Exception failedException = null;
             try {
                 compileResourcesAndIdmapIfNeeded(mPackages.get(target), pkg);
             } catch (IdmapException e) {
                 failedException = e;
-                errorCode = PackageManager.INSTALL_FAILED_THEME_IDMAP_ERROR;
             } catch (AaptException e) {
                 failedException = e;
-                errorCode = PackageManager.INSTALL_FAILED_THEME_AAPT_ERROR;
             } catch (Exception e) {
                 failedException = e;
-                errorCode = PackageManager.INSTALL_FAILED_THEME_UNKNOWN_ERROR;
             }
 
             if (failedException != null) {
-                Log.e(TAG, "Unable to process theme, uninstalling " + pkg.packageName,
+                Slog.w(TAG, "Unable to process theme " + pkg.packageName + " for " + target,
                       failedException);
-                uninstallThemeForAllApps(pkg);
-                deletePackageX(themePkgName, getCallingUid(), PackageManager.DELETE_ALL_USERS);
-                return errorCode;
+                // remove target from mOverlayTargets
+                iterator.remove();
             }
         }
 
@@ -14737,6 +14798,16 @@ public class PackageManagerService extends IPackageManager.Stub {
                 (ThemeManager) mContext.getSystemService(Context.THEME_SERVICE);
         if (tm != null) {
             tm.processThemeResources(pkgName);
+        }
+    }
+
+    private void createAndSetCustomResources() {
+        Configuration tempConfiguration = new Configuration();
+        String mcc = SystemProperties.get("ro.prebundled.mcc");
+        if (!TextUtils.isEmpty(mcc)) {
+            tempConfiguration.mcc = Integer.parseInt(mcc);
+            mCustomResources = new Resources(new AssetManager(), new DisplayMetrics(),
+                    tempConfiguration);
         }
     }
 

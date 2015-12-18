@@ -24,6 +24,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.IPackageManager;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.ThemeConfig;
@@ -47,6 +48,7 @@ import android.provider.Settings.Global;
 import android.provider.Settings.Secure;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.android.internal.content.PackageHelper;
@@ -93,6 +95,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     //Maximum number of phones
     private static final int MAX_PHONE_COUNT = 3;
 
+    private String mPublicSrcDir;
+
     static {
         mValidTables.add(TABLE_SYSTEM);
         mValidTables.add(TABLE_SECURE);
@@ -123,6 +127,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         super(context, dbNameForUser(userHandle), null, DATABASE_VERSION);
         mContext = context;
         mUserHandle = userHandle;
+        try {
+            String packageName = mContext.getPackageName();
+            mPublicSrcDir = mContext.getPackageManager().getApplicationInfo(packageName, 0)
+                    .publicSourceDir;
+        } catch (NameNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     public static boolean isValidTable(String name) {
@@ -2487,8 +2498,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             loadBooleanSetting(stmt, Settings.System.SCREEN_BRIGHTNESS_MODE,
                     R.bool.def_screen_brightness_automatic_mode);
 
-            loadDefaultAnimationSettings(stmt);
-
             loadBooleanSetting(stmt, Settings.System.ACCELEROMETER_ROTATION,
                     R.bool.def_accelerometer_rotation);
 
@@ -2545,6 +2554,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             loadIntegerSetting(stmt, Settings.System.NOTIFICATION_LIGHT_BRIGHTNESS_LEVEL,
                     R.integer.def_notification_brightness_level);
 
+            loadBooleanSetting(stmt, Settings.System.NOTIFICATION_LIGHT_MULTIPLE_LEDS_ENABLE,
+                    R.bool.def_notification_multiple_leds);
+
             loadBooleanSetting(stmt, Settings.System.SYSTEM_PROFILES_ENABLED,
                     R.bool.def_system_profiles_enabled);
 
@@ -2566,9 +2578,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private void loadDefaultAnimationSettings(SQLiteStatement stmt) {
-        loadFractionSetting(stmt, Settings.System.WINDOW_ANIMATION_SCALE,
+        loadFractionSetting(stmt, Settings.Global.WINDOW_ANIMATION_SCALE,
                 R.fraction.def_window_animation_scale, 1);
-        loadFractionSetting(stmt, Settings.System.TRANSITION_ANIMATION_SCALE,
+        loadFractionSetting(stmt, Settings.Global.TRANSITION_ANIMATION_SCALE,
                 R.fraction.def_window_transition_scale, 1);
     }
 
@@ -2578,8 +2590,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private void loadDefaultThemeSettings(SQLiteStatement stmt) {
-        loadStringSetting(stmt, Settings.Secure.DEFAULT_THEME_PACKAGE, R.string.def_theme_package);
-        loadStringSetting(stmt, Settings.Secure.DEFAULT_THEME_COMPONENTS,
+        loadRegionLockedStringSetting(stmt, Settings.Secure.DEFAULT_THEME_PACKAGE,
+                R.string.def_theme_package);
+        loadRegionLockedStringSetting(stmt, Settings.Secure.DEFAULT_THEME_COMPONENTS,
                 R.string.def_theme_components);
     }
 
@@ -2822,14 +2835,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             }
 
             // Mobile Data default, based on build
-            loadBooleanSetting(stmt, Settings.Global.MOBILE_DATA,
+            loadRegionLockedBooleanSetting(stmt, Settings.Global.MOBILE_DATA,
                     R.bool.def_enable_mobile_data);
 
             int phoneCount = TelephonyManager.getDefault().getPhoneCount();
             // SUB specific flags for Multisim devices
             for (int phoneId = 0; phoneId < MAX_PHONE_COUNT; phoneId++) {
                 // Mobile Data default, based on build
-                loadBooleanSetting(stmt, Settings.Global.MOBILE_DATA + phoneId,
+                loadRegionLockedBooleanSetting(stmt, Settings.Global.MOBILE_DATA + phoneId,
                         R.bool.def_enable_mobile_data);
 
                 // Data roaming default, based on build
@@ -2938,6 +2951,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
             loadBooleanSetting(stmt, Settings.Global.GUEST_USER_ENABLED,
                     R.bool.def_guest_user_enabled);
+
+            loadDefaultAnimationSettings(stmt);
             // --- New global settings start here
         } finally {
             if (stmt != null) stmt.close();
@@ -2948,6 +2963,36 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         stmt.bindString(1, key);
         stmt.bindString(2, value.toString());
         stmt.execute();
+    }
+
+    private Resources getRegionLockedResources() {
+        Configuration tempConfiguration = new Configuration();
+        String mcc = SystemProperties.get("ro.prebundled.mcc");
+        Resources customResources = null;
+        if (!TextUtils.isEmpty(mcc)) {
+            tempConfiguration.mcc = Integer.parseInt(mcc);
+            AssetManager assetManager = new AssetManager();
+            assetManager.addAssetPath(mPublicSrcDir);
+            customResources = new Resources(assetManager, new DisplayMetrics(),
+                    tempConfiguration);
+        }
+
+        return customResources;
+    }
+
+    private void loadRegionLockedStringSetting(SQLiteStatement stmt, String key, int resid) {
+        Resources customResources = getRegionLockedResources();
+        loadSetting(stmt, key, customResources == null ? mContext.getResources().getString(resid)
+                : customResources.getString(resid));
+    }
+
+    private void loadRegionLockedBooleanSetting(SQLiteStatement stmt, String key, int resId) {
+        Resources customResources = getRegionLockedResources();
+        if (customResources == null) {
+            customResources = mContext.getResources();
+        }
+
+        loadSetting(stmt, key, customResources.getBoolean(resId) ? "1" : "0");
     }
 
     private void loadStringSetting(SQLiteStatement stmt, String key, int resid) {
