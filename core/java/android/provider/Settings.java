@@ -3621,6 +3621,18 @@ public final class Settings {
          */
         public static final String SYSTEM_PREF_TEXT_STYLE = "pref_text_style";
 
+	/**
+         * Statusbar DEMENTED logo
+         * @hide
+         */
+        public static final String STATUS_BAR_DEMENTED_LOGO = "status_bar_demented_logo";
+
+        /**
+         * Statusbar DEMENTED logo color setting
+         * @hide
+         */
+        public static final String STATUS_BAR_DEMENTED_LOGO_COLOR = "status_bar_demented_logo_color";
+
         /**
          * Whether to show the battery bar
          * @hide

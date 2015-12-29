@@ -2611,6 +2611,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
             loadIntegerSetting(stmt, Settings.System.SET_DEFAULT_LAUNCHER,
                     R.integer.def_set_default_launcher);
+
+            loadIntegerSetting(stmt, Settings.System.STATUS_BAR_DEMENTED_LOGO,
+                    R.integer.def_set_show_demented_logo);
             /*
              * IMPORTANT: Do not add any more upgrade steps here as the global,
              * secure, and system settings are no longer stored in a database

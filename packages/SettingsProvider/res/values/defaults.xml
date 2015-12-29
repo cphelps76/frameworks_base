@@ -243,4 +243,7 @@
 
     <!-- Default setting for setting DEMENTEDHome launcher -->
     <integer name="def_set_default_launcher">1</integer>
+
+    <!-- Default setting for DEMENTED logo in status bar-->
+    <integer name="def_set_show_demented_logo">1</integer>
 </resources>

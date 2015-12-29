@@ -49,6 +49,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
@@ -347,6 +348,11 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     View mExpandedContents;
     TextView mNotificationPanelDebugText;
 
+    // DEMENTED logo
+    private boolean mDEMENTEDLogo;
+    private int mDEMENTEDLogoColor;
+    private ImageView DEMENTEDLogo;
+
     // settings
     private QSDragPanel mQSPanel;
     private QSTileHost mQSTileHost;
@@ -461,6 +467,12 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                     CMSettings.System.NAVBAR_LEFT_IN_LANDSCAPE), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(CMSettings.System.getUriFor(
                     CMSettings.Secure.RECENTS_LONG_PRESS_ACTIVITY), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_DEMENTED_LOGO),
+                    false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_DEMENTED_LOGO_COLOR),
+                    false, this, UserHandle.USER_ALL);
             update();
         }
 
@@ -491,6 +503,13 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
             // This method reads CMSettings.Secure.RECENTS_LONG_PRESS_ACTIVITY
             updateCustomRecentsLongPressHandler(false);
+
+            // DEMENTED logo
+            mDEMENTEDLogo = Settings.System.getInt(resolver,
+                    Settings.System.STATUS_BAR_DEMENTED_LOGO, 0) == 1;
+            mDEMENTEDLogoColor = Settings.System.getInt(resolver,
+                    Settings.System.STATUS_BAR_DEMENTED_LOGO_COLOR, 0xFFFFFFFF);
+            showDEMENTEDLogo(mDEMENTEDLogo, mDEMENTEDLogoColor);
         }
     }
 
@@ -3635,6 +3654,15 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             }
         }
     };
+
+    public void showDEMENTEDLogo(boolean show, int color) {
+        if (mStatusBarView == null) return;
+        DEMENTEDLogo = (ImageView) mStatusBarView.findViewById(R.id.demented_logo);
+        DEMENTEDLogo.setColorFilter(color, Mode.SRC_IN);
+        if (DEMENTEDLogo != null) {
+            DEMENTEDLogo.setVisibility(show ? (mDEMENTEDLogo ? View.VISIBLE : View.GONE) : View.GONE);
+        }
+    }
 
     private BroadcastReceiver mPackageBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
