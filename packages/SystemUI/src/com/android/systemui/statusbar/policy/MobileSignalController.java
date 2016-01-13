@@ -152,7 +152,7 @@ public class MobileSignalController extends SignalController<
      * Produce a mapping of data network types to icon groups for simple and quick use in
      * updateTelephony.
      */
-    private void mapIconSets() {
+    public void mapIconSets() {
         mNetworkToIconLookup.clear();
 
         mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_EVDO_0, TelephonyIcons.THREE_G);
@@ -369,7 +369,7 @@ public class MobileSignalController extends SignalController<
      * mDataState, and mSimState.  It should be called any time one of these is updated.
      * This will call listeners if necessary.
      */
-    private final void updateTelephony() {
+    public final void updateTelephony() {
         if (DEBUG) {
             Log.d(mTag, "updateTelephonySignalStrength: hasService=" + hasService()
                     + " ss=" + mSignalStrength);
