@@ -32,6 +32,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.Animatable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
@@ -142,10 +143,6 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
 
         mQsPanelTop = (QSPanelTopView) LayoutInflater.from(mContext).inflate(R.layout.qs_tile_top,
                 this, false);
-
-        // tint trash can to default color
-        final int color = mContext.getColor(R.color.qs_tile_trash);
-        DrawableCompat.setTint(mQsPanelTop.getDropTargetIcon().getDrawable(), color);
 
         mBrightnessView = mQsPanelTop.getBrightnessView();
         mFooter = new QSFooter(this, mContext);
@@ -512,6 +509,8 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
                     + tiles + "]");
         }
 
+        int currentViewPagerPage = mViewPager.getCurrentItem();
+
         if (mLastDragRecord != null && mRecords.indexOf(mLastDragRecord) == -1) {
             // the last removed record might be stored in mLastDragRecord if we just shifted
             // re-add it to the list so we'll clean it up below
@@ -527,6 +526,11 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
         while (iterator.hasPrevious()) {
             DragTileRecord dr = (DragTileRecord) iterator.previous();
 
+            if (dr.page >= 0) {
+                // clean up view
+                mPages.get(dr.page).removeView(dr.tileView);
+            }
+
             if (tiles.contains(dr.tile)) {
                 if (DEBUG_TILES) {
                     Log.i(TAG, "caching tile: " + dr.tile);
@@ -536,8 +540,6 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
                 if (DEBUG_TILES) {
                     Log.i(TAG, "removing tile: " + dr.tile);
                 }
-                // clean up view
-                mPages.get(dr.page).removeView(dr.tileView);
 
                 // remove record
                 iterator.remove();
@@ -547,19 +549,21 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
                     final int childCount = mPages.get(dr.page).getChildCount();
 
                     if (childCount == 0) {
-                        // if current page is the current max page COUNT (off by 1) then move back
                         final int currentIndex = mViewPager.getCurrentItem();
-                        if (currentIndex == (getCurrentMaxPageCount()) + (mEditing ? 1 : 0)) {
-                            mViewPager.setCurrentItem(currentIndex - 1, false);
-                            mPagerAdapter.startUpdate(mViewPager);
-                            final int pageIndex = mEditing ? currentIndex - 1 : currentIndex;
-                            mPages.remove(pageIndex);
-                            mPagerAdapter.finishUpdate(mViewPager);
-                            mPagerAdapter.notifyDataSetChanged();
+                        if (currentIndex > 0 && currentViewPagerPage == currentIndex) {
+                            // if we are about to remove the page we are currently on, move back
+                            currentViewPagerPage--;
                         }
+                        final int pageIndex = dr.page + (mEditing ? 1 : 0);
+                        mPagerAdapter.startUpdate(mViewPager);
+                        mPagerAdapter.destroyItem(mViewPager, pageIndex, mPages.get(dr.page));
+                        mPagerAdapter.finishUpdate(mViewPager);
+                        mPagerAdapter.notifyDataSetChanged();
                     }
                 }
             }
+            dr.page = -1;
+            dr.destinationPage = -1;
         }
 
         // at this point recordMap should have all retained tiles, no new or old tiles
@@ -568,7 +572,13 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
             Log.i(TAG, "record map delta: " + delta);
         }
         mRecords.ensureCapacity(tiles.size());
+
         mPagerAdapter.notifyDataSetChanged();
+
+        // even though we explicitly destroy old pages, without this call,
+        // the viewpager doesn't seem to want to pick up the fact that we have less pages
+        // and allows "empty" scrolls to the right where there is no page.
+        mViewPager.setAdapter(mPagerAdapter);
 
         // add new tiles
         for (int i = 0; i < tiles.size(); i++) {
@@ -601,10 +611,8 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
                     }
                     Collections.swap(mRecords, indexOf, i);
 
-                    record.destinationPage = tileDestPage;
-                    ensureDestinationPage(record);
                 }
-
+                record.destinationPage = tileDestPage;
             }
             if (record.page == -1) {
                 // add the view
@@ -616,6 +624,9 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
             }
         }
 
+        // restore the visible page
+        mViewPager.setCurrentItem(currentViewPagerPage, false);
+
         if (isShowingDetail()) {
             mDetail.bringToFront();
         }
@@ -623,16 +634,6 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
 
         refreshAllTiles();
         requestLayout();
-    }
-
-    private void ensureDestinationPage(DragTileRecord record) {
-        if (record.destinationPage != record.page) {
-            if (record.page >= 0) {
-                getPage(record.page).removeView(record.tileView);
-            }
-            getPage(record.destinationPage).addView(record.tileView);
-            record.page = record.destinationPage;
-        }
     }
 
     private DragTileRecord makeRecord(final QSTile<?> tile) {
@@ -961,6 +962,7 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
                         Log.v(TAG, "ACTION_DRAG_STARTED on target view.");
                     }
                     mRestored = false;
+                    mQsPanelTop.setDropIcon(R.drawable.ic_qs_tile_delete_disable, R.color.qs_tile_trash_normal_tint);
                 }
 
                 break;
@@ -977,16 +979,17 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
                 mMovedByLocation = false;
 
                 if (v == mQsPanelTop) {
-                    int color;
+                    int icon, color;
                     if (mDraggingRecord.tile instanceof EditTile) {
                         // use a different warning, user can't erase this one
-                        color = mContext.getColor(R.color.qs_tile_trash_delete_tint_warning);
+                        icon = R.drawable.ic_qs_tile_delete_disable_avd;
+                        color = R.color.qs_tile_trash_delete_tint_warning;
                     } else {
-                        color = mContext.getColor(R.color.qs_tile_trash_delete_tint);
+                        icon = R.drawable.ic_qs_tile_delete_disable;
+                        color = R.color.qs_tile_trash_delete_tint;
                     }
 
-                    DrawableCompat.setTint(mQsPanelTop.getDropTargetIcon().getDrawable(), color);
-                    mQsPanelTop.getDropTargetIcon().invalidate();
+                    mQsPanelTop.setDropIcon(icon, color);
                 }
 
                 if (!originatingTileEvent && v != getDropTarget() && targetTile != null) {
@@ -1053,9 +1056,7 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
                 }
 
                 if (v == mQsPanelTop) {
-                    final int color = mContext.getColor(R.color.qs_tile_trash);
-                    DrawableCompat.setTint(mQsPanelTop.getDropTargetIcon().getDrawable(), color);
-                    mQsPanelTop.getDropTargetIcon().invalidate();
+                    mQsPanelTop.setDropIcon(R.drawable.ic_qs_tile_delete_disable, R.color.qs_tile_trash_normal_tint);
                 }
 
                 if (originatingTileEvent
