@@ -237,4 +237,7 @@
 
     <!-- Default setting for showing the 4G indicator -->
     <integer name="def_show_4g_for_lte">1</integer>
+
+    <!-- Default setting for setting DEMENTEDHome launcher -->
+    <integer name="def_set_default_launcher">1</integer>
 </resources>

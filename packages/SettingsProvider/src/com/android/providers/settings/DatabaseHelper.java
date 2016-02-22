@@ -2595,6 +2595,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
             loadIntegerSetting(stmt, Settings.System.SHOW_4G_FOR_LTE,
                     R.integer.def_show_4g_for_lte);
 
+            loadIntegerSetting(stmt, Settings.System.SET_DEFAULT_LAUNCHER,
+                    R.integer.def_set_default_launcher);
             /*
              * IMPORTANT: Do not add any more upgrade steps here as the global,
              * secure, and system settings are no longer stored in a database
