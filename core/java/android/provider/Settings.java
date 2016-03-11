@@ -3545,13 +3545,6 @@ public final class Settings {
         public static final String SHOW_4G_FOR_LTE = "show_4g_for_lte";
 
         /**
-         * Allow setting default launcher
-         *
-         * @hide
-         */
-        public static final String SET_DEFAULT_LAUNCHER = "set_default_launcher";
-
-        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *

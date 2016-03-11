@@ -107,8 +107,6 @@ public class ResolverActivity extends Activity {
 
     protected ResolverDrawerLayout mResolverDrawerLayout;
 
-    private boolean mUseResolverIntent;
-
     private boolean mRegistered;
     private final PackageMonitor mPackageMonitor = new PackageMonitor() {
         @Override public void onSomePackagesChanged() {
@@ -229,49 +227,6 @@ public class ResolverActivity extends Activity {
 
         mPackageMonitor.register(this, getMainLooper(), false);
         mRegistered = true;
-
-        mUseResolverIntent = Settings.System.getInt(this.getContentResolver(),
-                Settings.System.SET_DEFAULT_LAUNCHER, 0) != 0;
-        try {
-            if (!mUseResolverIntent) {
-                if (mLaunchedFromUid < 0 || UserHandle.isIsolated(mLaunchedFromUid)) {
-		    finish();
-		    return;
-                } else {
-                    PackageManager Pm = this.getPackageManager();
-
-                    Intent mdefaultIntent = Pm.getLaunchIntentForPackage("com.android.launcher3");
-                    mdefaultIntent.addCategory(Intent.CATEGORY_DEFAULT);
-                    mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                    mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
-                    final IntentFilter mDefaultHomeFilter = new IntentFilter(Intent.ACTION_MAIN);
-                    mDefaultHomeFilter.addCategory(Intent.CATEGORY_HOME);
-                    mDefaultHomeFilter.addCategory(Intent.CATEGORY_DEFAULT);
-
-                    List<ResolveInfo> launchers = getLaunchers(Pm);
-                    final int N = launchers.size();
-                    ComponentName[] set = new ComponentName[N];
-                    int bestMatch = 0;
-                    for (int i = 0; i < N; i++) {
-                        ResolveInfo r = launchers.get(i);
-                        set[i] = new ComponentName(r.activityInfo.packageName,
-                                r.activityInfo.name);
-                        if (r.match > bestMatch) bestMatch = r.match;
-                    }
-
-                    Pm.addPreferredActivity(mDefaultHomeFilter, bestMatch, set, mdefaultIntent.getComponent());
-
-                    intent = mdefaultIntent;
-                    startActivity(intent);
-                    mRegistered = false;
-                    mAlwaysUseOption = true;
-                    finish();
-                    return;
-		}
-            }
-        } catch (Exception e) {
-        }
 
         final ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         mIconDpi = am.getLauncherLargeIconDensity();
@@ -490,13 +445,6 @@ public class ResolverActivity extends Activity {
                 mProfileSwitchMessageId = com.android.internal.R.string.forward_intent_to_work;
             }
         }
-    }
-
-    private List<ResolveInfo> getLaunchers(PackageManager Pm) {
-        final Intent homeIntent = new Intent(Intent.ACTION_MAIN, null);
-        homeIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        homeIntent.addCategory(Intent.CATEGORY_HOME);
-        return mPm.queryIntentActivities(homeIntent, 0);
     }
 
     /**
