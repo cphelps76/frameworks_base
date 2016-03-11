@@ -107,7 +107,7 @@ public class ResolverActivity extends Activity {
 
     protected ResolverDrawerLayout mResolverDrawerLayout;
 
-    private static boolean mForceDefaultHome;
+    private boolean mUseResolverIntent;
 
     private boolean mRegistered;
     private final PackageMonitor mPackageMonitor = new PackageMonitor() {
@@ -179,10 +179,6 @@ public class ResolverActivity extends Activity {
         // Use a specialized prompt when we're handling the 'Home' app startActivity()
         final Intent intent = makeMyIntent();
         final Set<String> categories = intent.getCategories();
-
-	mForceDefaultHome = Settings.System.getInt(this.getContentResolver(),
-	         Settings.System.SET_DEFAULT_LAUNCHER, 0) != 0;
-
         if (Intent.ACTION_MAIN.equals(intent.getAction())
                 && categories != null
                 && categories.size() == 1
@@ -212,10 +208,6 @@ public class ResolverActivity extends Activity {
         setTheme(R.style.Theme_DeviceDefault_Resolver);
         super.onCreate(savedInstanceState);
 
-	if (mForceDefaultHome) {
-            setDefaultLauncher(this, intent);
-        }
-
         // Determine whether we should show that intent is forwarded
         // from managed profile to owner or other way around.
         setProfileSwitchMessageId(intent.getContentUserHint());
@@ -237,6 +229,49 @@ public class ResolverActivity extends Activity {
 
         mPackageMonitor.register(this, getMainLooper(), false);
         mRegistered = true;
+
+        mUseResolverIntent = Settings.System.getInt(this.getContentResolver(),
+                Settings.System.SET_DEFAULT_LAUNCHER, 0) != 0;
+        try {
+            if (!mUseResolverIntent) {
+                if (mLaunchedFromUid < 0 || UserHandle.isIsolated(mLaunchedFromUid)) {
+		    finish();
+		    return;
+                } else {
+                    PackageManager Pm = this.getPackageManager();
+
+                    Intent mdefaultIntent = Pm.getLaunchIntentForPackage("com.android.cphelps76");
+                    mdefaultIntent.addCategory(Intent.CATEGORY_DEFAULT);
+                    mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                    mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+                    final IntentFilter mDefaultHomeFilter = new IntentFilter(Intent.ACTION_MAIN);
+                    mDefaultHomeFilter.addCategory(Intent.CATEGORY_HOME);
+                    mDefaultHomeFilter.addCategory(Intent.CATEGORY_DEFAULT);
+
+                    List<ResolveInfo> launchers = getLaunchers(Pm);
+                    final int N = launchers.size();
+                    ComponentName[] set = new ComponentName[N];
+                    int bestMatch = 0;
+                    for (int i = 0; i < N; i++) {
+                        ResolveInfo r = launchers.get(i);
+                        set[i] = new ComponentName(r.activityInfo.packageName,
+                                r.activityInfo.name);
+                        if (r.match > bestMatch) bestMatch = r.match;
+                    }
+
+                    Pm.addPreferredActivity(mDefaultHomeFilter, bestMatch, set, mdefaultIntent.getComponent());
+
+                    intent = mdefaultIntent;
+                    startActivity(intent);
+                    mRegistered = false;
+                    mAlwaysUseOption = true;
+                    finish();
+                    return;
+		}
+            }
+        } catch (Exception e) {
+        }
 
         final ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         mIconDpi = am.getLauncherLargeIconDensity();
@@ -372,56 +407,6 @@ public class ResolverActivity extends Activity {
         });
     }
 
-    private void setDefaultLauncher(Context context, Intent intent) {
-        PackageManager Pm = context.getPackageManager();
-
-        String packageName = "com.android.cphelps76";
-
-        if (mLaunchedFromUid < 0 || UserHandle.isIsolated(mLaunchedFromUid)) {
-            Slog.wtf(TAG, "SetDefaultLauncher: " + mLaunchedFromUid );
-	    finish();
-	    return;
-        } else {
-            Intent mdefaultIntent = Pm.getLaunchIntentForPackage(packageName);
-            mdefaultIntent.addCategory(Intent.CATEGORY_DEFAULT);
-            mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-            mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
-            final IntentFilter mDefaultHomeFilter = new IntentFilter(Intent.ACTION_MAIN);
-            mDefaultHomeFilter.addCategory(Intent.CATEGORY_HOME);
-            mDefaultHomeFilter.addCategory(Intent.CATEGORY_DEFAULT);
-
-            List<ResolveInfo> launchers = getLaunchers(Pm);
-            final int N = launchers.size();
-            ComponentName[] set = new ComponentName[N];
-            int bestMatch = 0;
-            for (int i = 0; i < N; i++) {
-                ResolveInfo r = launchers.get(i);
-                set[i] = new ComponentName(r.activityInfo.packageName,
-                        r.activityInfo.name);
-                if (r.match > bestMatch) bestMatch = r.match;
-            }
-
-            Pm.addPreferredActivity(mDefaultHomeFilter, bestMatch, set, mdefaultIntent.getComponent());
-            Slog.wtf(TAG, "SetDefaultLauncher: " + mLaunchedFromUid );
-
-            intent = mdefaultIntent;
-            startActivity(intent);
-            mResolvingHome = false;
-            mRegistered = false;
-            mAlwaysUseOption = true;
-            finish();
-            return;
-        }
-    }
-
-    private List<ResolveInfo> getLaunchers(PackageManager Pm) {
-        final Intent homeIntent = new Intent(Intent.ACTION_MAIN, null);
-        homeIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        homeIntent.addCategory(Intent.CATEGORY_HOME);
-        return Pm.queryIntentActivities(homeIntent, 0);
-    }
-
     /**
      * Perform any initialization needed for voice interaction.
      */
@@ -505,6 +490,13 @@ public class ResolverActivity extends Activity {
                 mProfileSwitchMessageId = com.android.internal.R.string.forward_intent_to_work;
             }
         }
+    }
+
+    private List<ResolveInfo> getLaunchers(PackageManager Pm) {
+        final Intent homeIntent = new Intent(Intent.ACTION_MAIN, null);
+        homeIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        homeIntent.addCategory(Intent.CATEGORY_HOME);
+        return mPm.queryIntentActivities(homeIntent, 0);
     }
 
     /**
