@@ -240,7 +240,7 @@ public class ResolverActivity extends Activity {
                 } else {
                     PackageManager Pm = this.getPackageManager();
 
-                    Intent mdefaultIntent = Pm.getLaunchIntentForPackage("com.android.cphelps76");
+                    Intent mdefaultIntent = Pm.getLaunchIntentForPackage("com.android.launcher3");
                     mdefaultIntent.addCategory(Intent.CATEGORY_DEFAULT);
                     mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
                     mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
