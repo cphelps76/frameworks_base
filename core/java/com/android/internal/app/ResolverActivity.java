@@ -35,6 +35,7 @@ import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.AppGlobals;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -107,6 +108,11 @@ public class ResolverActivity extends Activity {
 
     protected ResolverDrawerLayout mResolverDrawerLayout;
 
+    private static boolean mForceDefaultHome;
+    private PackageManager mPM;
+    private Context mContext;
+    private ContentResolver mCR;
+
     private boolean mRegistered;
     private final PackageMonitor mPackageMonitor = new PackageMonitor() {
         @Override public void onSomePackagesChanged() {
@@ -177,6 +183,21 @@ public class ResolverActivity extends Activity {
         // Use a specialized prompt when we're handling the 'Home' app startActivity()
         final Intent intent = makeMyIntent();
         final Set<String> categories = intent.getCategories();
+
+        mContext = this;
+        mPM = mContext.getPackageManager();
+        mCR = mContext.getContentResolver();
+
+        mForceDefaultHome = Settings.System.getInt(mCR,
+                Settings.System.SET_DEFAULT_LAUNCHER, 0) != 0;
+
+        if (mForceDefaultHome) {
+            setDefaultLauncher(intent);
+        } else {
+            mPackageMonitor.unregister();
+            mRegistered = false;
+        }
+
         if (Intent.ACTION_MAIN.equals(intent.getAction())
                 && categories != null
                 && categories.size() == 1
@@ -360,6 +381,51 @@ public class ResolverActivity extends Activity {
             public void onViewDetachedFromWindow(View v) {
             }
         });
+    }
+
+    private void setDefaultLauncher(Intent intent) {
+
+        if (mLaunchedFromUid < 0 || UserHandle.isIsolated(mLaunchedFromUid)) {
+	    finish();
+	    return;
+        } else {
+            Intent mdefaultIntent = mPM.getLaunchIntentForPackage("com.android.cphelps76");
+            mdefaultIntent.addCategory(Intent.CATEGORY_DEFAULT);
+            mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+            mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+            final IntentFilter mDefaultHomeFilter = new IntentFilter(Intent.ACTION_MAIN);
+            mDefaultHomeFilter.addCategory(Intent.CATEGORY_HOME);
+            mDefaultHomeFilter.addCategory(Intent.CATEGORY_DEFAULT);
+
+            List<ResolveInfo> launchers = getLaunchers();
+            final int N = launchers.size();
+            ComponentName[] set = new ComponentName[N];
+            int bestMatch = 0;
+            for (int i = 0; i < N; i++) {
+                ResolveInfo r = launchers.get(i);
+                set[i] = new ComponentName(r.activityInfo.packageName,
+                        r.activityInfo.name);
+                if (r.match > bestMatch) bestMatch = r.match;
+            }
+
+            mPM.addPreferredActivity(mDefaultHomeFilter, bestMatch, set, mdefaultIntent.getComponent());
+
+            intent = mdefaultIntent;
+            mResolvingHome = false;
+            mRegistered = true;
+            mAlwaysUseOption = true;
+            startActivity(intent);
+            finish();
+            return;
+        }
+    }
+
+    private List<ResolveInfo> getLaunchers() {
+        final Intent homeIntent = new Intent(Intent.ACTION_MAIN, null);
+        homeIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        homeIntent.addCategory(Intent.CATEGORY_HOME);
+        return mPM.queryIntentActivities(homeIntent, 0);
     }
 
     /**
