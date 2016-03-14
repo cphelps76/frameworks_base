@@ -157,4 +157,8 @@
     <!-- Default launcher -->
     <java-symbol type="string" name="default_launcher_set" />
     <java-symbol type="string" name="default_launcher_unset" />
+
+    <!-- Uicc hotswapped event configuration needed notification -->
+    <java-symbol type="string" name="uicc_hot_swapped_event_title" />
+    <java-symbol type="string" name="uicc_hot_swapped_event_text" />
 </resources>

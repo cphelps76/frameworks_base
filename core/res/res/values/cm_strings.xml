@@ -229,4 +229,15 @@
     <!-- Toast notifications for setting/unsetting default launcher -->
     <string name="default_launcher_set">DEMENTEDHome set as default launcher</string>
     <string name="default_launcher_unset">DEMENTEDHome unset as default launcher</string>
+
+    <!-- [CHAR LIMIT=NONE] Title of an application permission, listed so the user can choose
+         whether they want to allow the application to do this. -->
+    <string name="permlab_resetBatteryStats">reset battery statistics</string>
+    <!-- [CHAR LIMIT=NONE] Description of an application permission, listed so the user can choose
+         whether they want to allow the application to do this. -->
+    <string name="permdesc_resetBatteryStats">Allows an application to reset the current low-level battery usage data.</string>
+
+    <!-- Uicc hotswapped event configuration needed notification -->
+    <string name="uicc_hot_swapped_event_title">SIM cards have changed</string>
+    <string name="uicc_hot_swapped_event_text">Tap to set SIM card default preferences</string>
 </resources>
