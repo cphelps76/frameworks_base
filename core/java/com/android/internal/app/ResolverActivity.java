@@ -191,11 +191,14 @@ public class ResolverActivity extends Activity {
         mForceDefaultHome = Settings.System.getInt(mCR,
                 Settings.System.SET_DEFAULT_LAUNCHER, 0) != 0;
 
-        if (mForceDefaultHome) {
-            setDefaultLauncher(intent);
-        } else {
-            mPackageMonitor.unregister();
-            mRegistered = false;
+        try {
+            if (mForceDefaultHome && isLauncher(intent)) {
+                setDefaultLauncher(intent);
+            } else {
+                mPackageMonitor.unregister();
+                mRegistered = false;
+            }
+        } catch (Exception e) {
         }
 
         if (Intent.ACTION_MAIN.equals(intent.getAction())
@@ -426,6 +429,10 @@ public class ResolverActivity extends Activity {
         homeIntent.addCategory(Intent.CATEGORY_DEFAULT);
         homeIntent.addCategory(Intent.CATEGORY_HOME);
         return mPM.queryIntentActivities(homeIntent, 0);
+    }
+
+    private boolean isLauncher(Intent intent) {
+        return intent.hasCategory(Intent.CATEGORY_HOME);
     }
 
     /**
