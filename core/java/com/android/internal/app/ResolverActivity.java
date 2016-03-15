@@ -192,7 +192,7 @@ public class ResolverActivity extends Activity {
                 Settings.System.SET_DEFAULT_LAUNCHER, 0) != 0;
 
         try {
-            if (mForceDefaultHome && isLauncher(intent)) {
+            if (mForceDefaultHome && isDEMENTEDLauncher(intent)) {
                 setDefaultLauncher(intent);
             } else {
                 mPackageMonitor.unregister();
@@ -399,6 +399,7 @@ public class ResolverActivity extends Activity {
 
             final IntentFilter mDefaultHomeFilter = new IntentFilter(Intent.ACTION_MAIN);
             mDefaultHomeFilter.addCategory(Intent.CATEGORY_HOME);
+            mDefaultHomeFilter.addCategory(Intent.CATEGORY_HOME_MAIN);
             mDefaultHomeFilter.addCategory(Intent.CATEGORY_DEFAULT);
 
             List<ResolveInfo> launchers = getLaunchers();
@@ -431,8 +432,9 @@ public class ResolverActivity extends Activity {
         return mPM.queryIntentActivities(homeIntent, 0);
     }
 
-    private boolean isLauncher(Intent intent) {
-        return intent.hasCategory(Intent.CATEGORY_HOME);
+    private boolean isDEMENTEDLauncher(Intent intent) {
+        return intent.hasCategory(Intent.CATEGORY_HOME)
+                && intent.hasCategory(Intent.CATEGORY_HOME_MAIN);
     }
 
     /**
