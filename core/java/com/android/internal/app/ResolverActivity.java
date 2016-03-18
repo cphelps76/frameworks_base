@@ -112,6 +112,7 @@ public class ResolverActivity extends Activity {
     private PackageManager mPM;
     private Context mContext;
     private ContentResolver mCR;
+    private Intent mdefaultIntent;
 
     private boolean mRegistered;
     private final PackageMonitor mPackageMonitor = new PackageMonitor() {
@@ -167,23 +168,23 @@ public class ResolverActivity extends Activity {
     }
 
     private Intent makeMyIntent() {
-        Intent intent = new Intent(getIntent());
-        intent.setComponent(null);
-        // The resolver activity is set to be hidden from recent tasks.
-        // we don't want this attribute to be propagated to the next activity
-        // being launched.  Note that if the original Intent also had this
-        // flag set, we are now losing it.  That should be a very rare case
-        // and we can live with this.
-        intent.setFlags(intent.getFlags()&~Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+            Intent intent = new Intent(getIntent());
+        if (!mForceDefaultHome) {
+            intent.setComponent(null);
+            // The resolver activity is set to be hidden from recent tasks.
+            // we don't want this attribute to be propagated to the next activity
+            // being launched.  Note that if the original Intent also had this
+            // flag set, we are now losing it.  That should be a very rare case
+            // and we can live with this.
+            intent.setFlags(intent.getFlags()&~Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+        } else {
+            intent = mdefaultIntent;
+        }
         return intent;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Use a specialized prompt when we're handling the 'Home' app startActivity()
-        final Intent intent = makeMyIntent();
-        final Set<String> categories = intent.getCategories();
-
         mContext = this;
         mPM = mContext.getPackageManager();
         mCR = mContext.getContentResolver();
@@ -191,8 +192,17 @@ public class ResolverActivity extends Activity {
         mForceDefaultHome = Settings.System.getInt(mCR,
                 Settings.System.SET_DEFAULT_LAUNCHER, 0) != 0;
 
+        mdefaultIntent = mPM.getLaunchIntentForPackage("com.android.cphelps76");
+        mdefaultIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+        mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        // Use a specialized prompt when we're handling the 'Home' app startActivity()
+        final Intent intent = makeMyIntent();
+        final Set<String> categories = intent.getCategories();
+
         try {
-            if (mForceDefaultHome && isDEMENTEDLauncher(intent)) {
+            if (mForceDefaultHome) {
                 setDefaultLauncher(intent);
             } else {
                 mPackageMonitor.unregister();
@@ -392,11 +402,6 @@ public class ResolverActivity extends Activity {
 	    finish();
 	    return;
         } else {
-            Intent mdefaultIntent = mPM.getLaunchIntentForPackage("com.android.cphelps76");
-            mdefaultIntent.addCategory(Intent.CATEGORY_DEFAULT);
-            mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-            mdefaultIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
             final IntentFilter mDefaultHomeFilter = new IntentFilter(Intent.ACTION_MAIN);
             mDefaultHomeFilter.addCategory(Intent.CATEGORY_HOME);
             mDefaultHomeFilter.addCategory(Intent.CATEGORY_HOME_MAIN);
@@ -415,7 +420,6 @@ public class ResolverActivity extends Activity {
 
             mPM.addPreferredActivity(mDefaultHomeFilter, bestMatch, set, mdefaultIntent.getComponent());
 
-            intent = mdefaultIntent;
             mResolvingHome = false;
             mRegistered = true;
             mAlwaysUseOption = true;
@@ -430,11 +434,6 @@ public class ResolverActivity extends Activity {
         homeIntent.addCategory(Intent.CATEGORY_DEFAULT);
         homeIntent.addCategory(Intent.CATEGORY_HOME);
         return mPM.queryIntentActivities(homeIntent, 0);
-    }
-
-    private boolean isDEMENTEDLauncher(Intent intent) {
-        return intent.hasCategory(Intent.CATEGORY_HOME)
-                && intent.hasCategory(Intent.CATEGORY_HOME_MAIN);
     }
 
     /**
