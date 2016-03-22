@@ -19,12 +19,10 @@ package com.android.systemui.statusbar.policy;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
-import android.database.ContentObserver;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.wifi.WifiManager;
@@ -118,8 +116,6 @@ public class NetworkControllerImpl extends BroadcastReceiver
     // The current user ID.
     private int mCurrentUserId;
 
-    private static boolean mShow4g;
-
     private OnSubscriptionsChangedListener mSubscriptionListener;
 
     // Handler that all broadcasts are received on.
@@ -146,9 +142,6 @@ public class NetworkControllerImpl extends BroadcastReceiver
                 new MobileDataControllerImpl(context),
                 new SubscriptionDefaults());
         mReceiverHandler.post(mRegisterListeners);
-
-        SettingsObserver settingsObserver = new SettingsObserver(new Handler());
-        settingsObserver.observe();
     }
 
     @VisibleForTesting
@@ -847,40 +840,12 @@ public class NetworkControllerImpl extends BroadcastReceiver
             config.showAtLeast3G = res.getBoolean(R.bool.config_showMin3G);
             config.alwaysShowCdmaRssi =
                     res.getBoolean(com.android.internal.R.bool.config_alwaysUseCdmaRssi);
-            config.show4gForLte = mShow4g;
+            config.show4gForLte = res.getBoolean(R.bool.config_show4GForLTE);
             config.hspaDataDistinguishable =
                     res.getBoolean(R.bool.config_hspa_data_distinguishable);
             config.showRsrpSignalLevelforLTE =
                     res.getBoolean(R.bool.config_showRsrpSignalLevelforLTE);
             return config;
-        }
-    }
-
-    class SettingsObserver extends ContentObserver {
-        SettingsObserver(Handler handler) {
-            super(handler);
-        }
-
-        void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
-            resolver.registerContentObserver(Settings.System.getUriFor
-                    (Settings.System.SHOW_4G_FOR_LTE), false, this);
-            updateSettings();
-        }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            updateSettings();
-        }
-    }
-
-    protected void updateSettings() {
-        ContentResolver resolver = mContext.getContentResolver();
-        mShow4g = Settings.System.getInt(resolver,
-                Settings.System.SHOW_4G_FOR_LTE, 0) == 1;
-        for (MobileSignalController mobileSignalController : mMobileSignalControllers.values()) {
-            mobileSignalController.mapIconSets();
-            mobileSignalController.updateTelephony();
         }
     }
 }
