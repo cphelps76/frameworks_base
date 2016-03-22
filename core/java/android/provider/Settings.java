@@ -3538,6 +3538,13 @@ public final class Settings {
                 "volume_keys_control_ring_stream";
 
         /**
+         * Config for showing LTE for 4g
+         *
+         * @hide
+         */
+        public static final String SHOW_4G_FOR_LTE = "show_4g_for_lte";
+
+        /**
          * Allow setting default launcher
          *
          * @hide

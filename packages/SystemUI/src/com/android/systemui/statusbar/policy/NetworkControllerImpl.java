@@ -116,6 +116,8 @@ public class NetworkControllerImpl extends BroadcastReceiver
     // The current user ID.
     private int mCurrentUserId;
 
+    private static boolean mShow4g;
+
     private OnSubscriptionsChangedListener mSubscriptionListener;
 
     // Handler that all broadcasts are received on.
@@ -165,6 +167,9 @@ public class NetworkControllerImpl extends BroadcastReceiver
 
         // telephony
         mPhone = telephonyManager;
+
+        mShow4g = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SHOW_4G_FOR_LTE, 0) == 1;
 
         // wifi
         mWifiManager = wifiManager;
@@ -840,7 +845,7 @@ public class NetworkControllerImpl extends BroadcastReceiver
             config.showAtLeast3G = res.getBoolean(R.bool.config_showMin3G);
             config.alwaysShowCdmaRssi =
                     res.getBoolean(com.android.internal.R.bool.config_alwaysUseCdmaRssi);
-            config.show4gForLte = res.getBoolean(R.bool.config_show4GForLTE);
+            config.show4gForLte = mShow4g;
             config.hspaDataDistinguishable =
                     res.getBoolean(R.bool.config_hspa_data_distinguishable);
             config.showRsrpSignalLevelforLTE =

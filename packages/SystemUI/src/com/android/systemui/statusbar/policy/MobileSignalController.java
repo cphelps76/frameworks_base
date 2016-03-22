@@ -16,8 +16,13 @@
 package com.android.systemui.statusbar.policy;
 
 import android.content.Context;
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.ContentObserver;
 import android.net.NetworkCapabilities;
+import android.net.Uri;
+import android.provider.Settings;
+import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemProperties;
 import android.telephony.PhoneStateListener;
@@ -67,6 +72,11 @@ public class MobileSignalController extends SignalController<
     private MobileIconGroup mDefaultIcons;
     private Config mConfig;
 
+    private static boolean mShow4g;
+    private SettingsObserver mObserver;
+    private Context mContext;
+    private final Handler mHandler;
+
     // TODO: Reduce number of vars passed in, if we have the NetworkController, probably don't
     // need listener lists anymore.
     public MobileSignalController(Context context, Config config, boolean hasMobileData,
@@ -95,6 +105,16 @@ public class MobileSignalController extends SignalController<
         mLastState.networkNameData = mCurrentState.networkNameData = networkName;
         mLastState.enabled = mCurrentState.enabled = hasMobileData;
         mLastState.iconGroup = mCurrentState.iconGroup = mDefaultIcons;
+
+        mContext = context;
+        mHandler = new Handler();
+
+        mShow4g = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SHOW_4G_FOR_LTE, 0) == 1;
+
+        mObserver = new SettingsObserver(mContext, mHandler);
+        mObserver.observe();
+
         // Get initial data sim state.
         updateDataSim();
     }
@@ -194,7 +214,7 @@ public class MobileSignalController extends SignalController<
         }
         mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_HSPAP, hGroup);
 
-        if (mConfig.show4gForLte) {
+        if (mShow4g) {
             mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_LTE, TelephonyIcons.FOUR_G);
             mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_LTE_CA,
                 TelephonyIcons.FOUR_G_PLUS);
@@ -582,6 +602,42 @@ public class MobileSignalController extends SignalController<
                     && ((MobileState) o).carrierNetworkChangeMode == carrierNetworkChangeMode
                     && ((MobileState) o).isDefault == isDefault
                     && ((MobileState) o).showSeparateRoaming == showSeparateRoaming;
+        }
+    }
+
+   private final class SettingsObserver extends ContentObserver {
+        private ContentResolver mResolver;
+        private boolean mRegistered;
+
+        private final Uri SHOW_4G =
+                Settings.System.getUriFor(Settings.System.SHOW_4G_FOR_LTE);
+
+        public SettingsObserver(Context context, Handler handler) {
+            super(handler);
+            mResolver = context.getContentResolver();
+        }
+
+        public void observe() {
+            if (mRegistered) {
+                mResolver.unregisterContentObserver(this);
+            }
+            mResolver.registerContentObserver(SHOW_4G, false, this);
+            mRegistered = true;
+
+            updateSettings();
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            updateSettings();
+        }
+
+        private void updateSettings() {
+            mShow4g = Settings.System.getInt(mResolver,
+                    Settings.System.SHOW_4G_FOR_LTE, 0) == 1;
+            mapIconSets();
+            updateTelephony();
+            updateDataSim();
         }
     }
 }
