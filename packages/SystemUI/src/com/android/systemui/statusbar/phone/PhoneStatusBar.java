@@ -1181,7 +1181,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                         mNetworkController, mZenModeController, mHotspotController,
                         mCastController, mFlashlightController,
                         mUserSwitcherController, mKeyguardMonitor,
-                        mSecurityController);
+                        mSecurityController, mBatteryController);
             }
             mQSPanel.setHost(mQSTileHost);
             if (mBrightnessMirrorController == null) {
@@ -3836,6 +3836,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         if (mState == StatusBarState.KEYGUARD) {
             // this will make sure the keyguard is showing
             showKeyguard();
+            // make sure to hide the notification icon area and system iconography
+            // to avoid overlap (CYNGNOS-2253)
+            mIconController.hideNotificationIconArea(false);
+            mIconController.hideSystemIconArea(false);
         }
 
         // update mLastThemeChangeTime
