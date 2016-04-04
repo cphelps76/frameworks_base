@@ -371,6 +371,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     int[] mNavigationBarHeightForRotation = new int[4];
     int[] mNavigationBarWidthForRotation = new int[4];
 
+    private ScreenShotReceiver mScreenShotReceiver;
+
     WindowState mKeyguardPanel;
 
     KeyguardServiceDelegate mKeyguardDelegate;
@@ -749,6 +751,38 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mClearedBecauseOfForceShow;
     private boolean mTopWindowIsKeyguard;
     private CMHardwareManager mCMHardware;
+
+    class ScreenShotReceiver extends BroadcastReceiver {
+        private boolean mIsRegistered = false;
+
+        public ScreenShotReceiver(Context context) {
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (action.equals(Intent.ACTION_SCREENSHOT)) {
+                takeScreenshot();
+            }
+        }
+
+        private void registerSelf() {
+            if (!mIsRegistered) {
+                mIsRegistered = true;
+
+                IntentFilter filter = new IntentFilter();
+                filter.addAction(Intent.ACTION_SCREENSHOT);
+                mContext.registerReceiver(mScreenShotReceiver, filter);
+            }
+        }
+
+        private void unregisterSelf() {
+            if (mIsRegistered) {
+                mIsRegistered = false;
+                mContext.unregisterReceiver(this);
+            }
+        }
+    }
 
     private class PolicyHandler extends Handler {
         @Override
@@ -1845,6 +1879,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         + deviceKeyHandlerLib, e);
             }
         }
+
+        mScreenShotReceiver = new ScreenShotReceiver(context);
+        mScreenShotReceiver.registerSelf();
 
     }
 
