@@ -706,6 +706,14 @@ public class Intent implements Parcelable, Cloneable {
     public static final String ACTION_SCREENSHOT = "android.intent.action.SCREENSHOT";
 
     /**
+     * PhoneWindowManager: Take Screenshot via takeScreenrecord()
+     *  <p>Input: nothing
+     *  <p>Output: nothing
+     *  @hide
+     */
+    public static final String ACTION_SCREENRECORD = "android.intent.action.SCREENRECORD";
+
+    /**
      * Activity Action: Creates a shortcut.
      * <p>Input: Nothing.</p>
      * <p>Output: An Intent representing the shortcut. The intent must contain three

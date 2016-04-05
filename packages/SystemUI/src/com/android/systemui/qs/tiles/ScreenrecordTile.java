@@ -25,19 +25,19 @@ import com.android.systemui.R;
 
 import org.cyanogenmod.internal.logging.CMMetricsLogger;
 
-public class ScreenshotTile extends QSTile<QSTile.BooleanState> {
+public class ScreenrecordTile extends QSTile<QSTile.BooleanState> {
 
     private boolean mListening;
 
-    public ScreenshotTile(Host host) {
+    public ScreenrecordTile(Host host) {
         super(host);
     }
 
     @Override
     protected void handleUpdateState(BooleanState state, Object arg) {
         state.visible = true;
-        state.icon = ResourceIcon.get(R.drawable.ic_qs_screenshot);
-        state.label = mContext.getString(R.string.quick_settings_screenshot_label);
+        state.icon = ResourceIcon.get(R.drawable.ic_qs_screenrecord);
+        state.label = mContext.getString(R.string.quick_settings_screenrecord_label);
     }
 
     @Override
@@ -51,24 +51,16 @@ public class ScreenshotTile extends QSTile<QSTile.BooleanState> {
         mHandler.postDelayed(mRunnable, 850);
     }
 
-    @Override
-    public void handleLongClick() {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClassName("com.android.gallery3d",
-            "com.android.gallery3d.app.GalleryActivity");
-        mContext.sendBroadcast(intent);
-    }
-
     private Runnable mRunnable = new Runnable() {
         public void run() {
-            Intent screenshot = new Intent(Intent.ACTION_SCREENSHOT);
-            mContext.sendBroadcast(screenshot);
+            Intent screenrecord = new Intent(Intent.ACTION_SCREENRECORD);
+            mContext.sendBroadcast(screenrecord);
         }
     };
 
     @Override
     public int getMetricsCategory() {
-        return CMMetricsLogger.TILE_SCREENSHOT;
+        return CMMetricsLogger.TILE_SCREENRECORD;
     }
 
     @Override
