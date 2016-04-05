@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2016 DEMENTED
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="106dp"
+    android:height="64dp"
+    android:viewportWidth="106"
+    android:viewportHeight="64">
+
+    <group
+            android:translateY="64.000000"
+            android:scaleX="0.100000"
+            android:scaleY="-0.100000">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M233 500 c-34 -3 -68 -11 -75 -18 -10 -10 -13 -54 -13 -168 0 -187 -2 -184 117
+-184 71 0 78 2 78 20 0 13 -7 20 -20 20 -19 0 -20 7 -20 150 l0 151 255 -1 255 -1
+0 -149 c0 -146 0 -149 -22 -152 -13 -2 -24 -11 -26 -20 -3 -16 5 -18 56 -18 43 0
+63 5 73 16 19 23 26 283 9 324 l-12 30 -192 0 c-105 1 -238 2 -296 3 -58 1 -133 0
+-167 -3z m-23 -185 c0 -8 -4 -15 -9 -15 -13 0 -22 16 -14 24 11 11 23 6 23 -9z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M496 385 c-6 -17 -46 -21 -46 -5 0 6 -14 10 -31 10 -26 0 -30 -3 -26 -19 3 -12 -1
+-22 -9 -25 -12 -5 -14 -27 -12 -108 l3 -103 178 -3 177 -2 0 120 0 120 -55 0 c-40
+0 -57 4 -61 15 -9 21 -109 21 -118 0z m115 -74 c20 -20 29 -39 29 -61 0 -37 -47
+-90 -79 -90 -39 0 -71 20 -88 54 -14 29 -14 39 -3 66 26 62 95 77 141 31z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M512 300 c-41 -38 -16 -120 37 -120 32 0 71 39 71 70 0 19 -9 36 -26 49 -34 26 -54
+26 -82 1z" />
+    </group>
+</vector>

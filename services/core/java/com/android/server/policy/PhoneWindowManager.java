@@ -698,6 +698,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final long SCREENSHOT_CHORD_DEBOUNCE_DELAY_MILLIS = 150;
     // Increase the chord delay when taking a screenshot from the keyguard
     private static final float KEYGUARD_SCREENSHOT_CHORD_DELAY_MULTIPLIER = 2.5f;
+    // Time to volume and power must be pressed within this interval of each other.
+    private static final long SCREENRECORD_CHORD_DEBOUNCE_DELAY_MILLIS = 150;
+    // Increase the chord delay when taking a screen video recording from the keyguard
+    private static final float KEYGUARD_SCREENRECORD_CHORD_DELAY_MULTIPLIER = 2.5f;
     private boolean mScreenshotChordEnabled;
     private boolean mScreenshotChordVolumeDownKeyTriggered;
     private long mScreenshotChordVolumeDownKeyTime;
@@ -763,15 +767,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             final String action = intent.getAction();
             if (action.equals(Intent.ACTION_SCREENSHOT)) {
                 takeScreenshot();
+            } else if (action.equals(Intent.ACTION_SCREENRECORD)) {
+                takeScreenrecord();
             }
         }
 
         private void registerSelf() {
             if (!mIsRegistered) {
                 mIsRegistered = true;
-
                 IntentFilter filter = new IntentFilter();
                 filter.addAction(Intent.ACTION_SCREENSHOT);
+                filter.addAction(Intent.ACTION_SCREENRECORD);
                 mContext.registerReceiver(mScreenShotReceiver, filter);
             }
         }
@@ -5479,7 +5485,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     final Object mScreenshotLock = new Object();
+    final Object mScreenrecordLock = new Object();
     ServiceConnection mScreenshotConnection = null;
+    ServiceConnection mScreenrecordConnection = null;
 
     final Runnable mScreenshotTimeout = new Runnable() {
         @Override public void run() {
@@ -5487,6 +5495,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (mScreenshotConnection != null) {
                     mContext.unbindService(mScreenshotConnection);
                     mScreenshotConnection = null;
+                }
+            }
+        }
+    };
+
+    final Runnable mScreenrecordTimeout = new Runnable() {
+        @Override public void run() {
+            synchronized (mScreenrecordLock) {
+                if (mScreenrecordConnection != null) {
+                    mContext.unbindService(mScreenrecordConnection);
+                    mScreenrecordConnection = null;
                 }
             }
         }
@@ -5543,6 +5562,56 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     intent, conn, Context.BIND_AUTO_CREATE, UserHandle.CURRENT)) {
                 mScreenshotConnection = conn;
                 mHandler.postDelayed(mScreenshotTimeout, 10000);
+            }
+        }
+    }
+
+    // Assume this is called from the Handler thread.
+    private void takeScreenrecord() {
+        synchronized (mScreenrecordLock) {
+            if (mScreenrecordConnection != null) {
+                return;
+            }
+            ComponentName cn = new ComponentName("com.android.systemui",
+                    "com.android.systemui.screenrecord.TakeScreenrecordService");
+            Intent intent = new Intent();
+            intent.setComponent(cn);
+            ServiceConnection conn = new ServiceConnection() {
+                @Override
+                public void onServiceConnected(ComponentName name, IBinder service) {
+                    synchronized (mScreenrecordLock) {
+                        Messenger messenger = new Messenger(service);
+                        Message msg = Message.obtain(null, 1);
+                        final ServiceConnection myConn = this;
+                        Handler h = new Handler(mHandler.getLooper()) {
+                            @Override
+                            public void handleMessage(Message msg) {
+                                synchronized (mScreenrecordLock) {
+                                    if (mScreenrecordConnection == myConn) {
+                                        mContext.unbindService(mScreenrecordConnection);
+                                        mScreenrecordConnection = null;
+                                        mHandler.removeCallbacks(mScreenrecordTimeout);
+                                    }
+                                }
+                            }
+                        };
+                        msg.replyTo = new Messenger(h);
+                        msg.arg1 = msg.arg2 = 0;
+                        try {
+                            messenger.send(msg);
+                        } catch (RemoteException e) {
+                        }
+                    }
+                }
+                @Override
+                public void onServiceDisconnected(ComponentName name) {}
+            };
+            if (mContext.bindServiceAsUser(
+                    intent, conn, Context.BIND_AUTO_CREATE, UserHandle.CURRENT)) {
+                mScreenrecordConnection = conn;
+                // Screenrecord max duration is 30 minutes. Allow 31 minutes before killing
+                // the service.
+                mHandler.postDelayed(mScreenrecordTimeout, 31 * 60 * 1000);
             }
         }
     }

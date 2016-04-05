@@ -62,6 +62,7 @@ import com.android.systemui.qs.tiles.PerfProfileTile;
 import com.android.systemui.qs.tiles.ProfilesTile;
 import com.android.systemui.qs.tiles.RotationLockTile;
 import com.android.systemui.qs.tiles.ScreenshotTile;
+import com.android.systemui.qs.tiles.ScreenrecordTile;
 import com.android.systemui.qs.tiles.ScreenTimeoutTile;
 import com.android.systemui.qs.tiles.SyncTile;
 import com.android.systemui.qs.tiles.UsbTetherTile;
@@ -375,6 +376,7 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (tileSpec.equals("battery_saver")) return new BatterySaverTile(this);
         else if (tileSpec.equals("caffeine")) return new CaffeineTile(this);
         else if (tileSpec.equals("screenshot")) return new ScreenshotTile(this);
+        else if (tileSpec.equals("screenrecord")) return new ScreenrecordTile(this);
         else if (tileSpec.startsWith(IntentTile.PREFIX)) return IntentTile.create(this,tileSpec);
         else throw new IllegalArgumentException("Bad tile spec: " + tileSpec);
     }
@@ -470,6 +472,7 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (spec.equals("battery_saver")) return R.string.quick_settings_battery_saver_label;
         else if (spec.equals("caffeine")) return R.string.quick_settings_caffeine_label;
         else if (spec.equals("screenshot")) return R.string.quick_settings_screenshot_label;
+        else if (spec.equals("screenrecord")) return R.string.quick_settings_screenrecord_label;
         return 0;
     }
 
@@ -502,6 +505,7 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (spec.equals("battery_saver")) return R.drawable.ic_qs_battery_saver_on;
         else if (spec.equals("caffeine")) return R.drawable.ic_qs_caffeine_on;
         else if (spec.equals("screenshot")) return R.drawable.ic_qs_screenshot;
+        else if (spec.equals("screenrecord")) return R.drawable.ic_qs_screenrecord;
         return 0;
     }
 
