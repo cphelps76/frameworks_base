@@ -22,6 +22,7 @@ import android.app.ActivityManagerInternal.SleepToken;
 import android.app.ActivityManagerNative;
 import android.app.AppOpsManager;
 import android.app.IUiModeManager;
+import android.app.KeyguardManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.app.StatusBarManager;
@@ -755,6 +756,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mClearedBecauseOfForceShow;
     private boolean mTopWindowIsKeyguard;
     private CMHardwareManager mCMHardware;
+    private boolean mShowKeyguardOnLeftSwipe;
 
     class ScreenShotReceiver extends BroadcastReceiver {
         private boolean mIsRegistered = false;
@@ -1797,6 +1799,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         if (mNavigationBar != null && !mNavigationBarOnBottom &&
                                 mNavigationBarLeftInLandscape) {
                             requestTransientBars(mNavigationBar);
+                        }
+                        if (mShowKeyguardOnLeftSwipe && isKeyguardShowingOrOccluded()) {
+                            // Show keyguard
+                            mKeyguardDelegate.showKeyguard();
+                            mShowKeyguardOnLeftSwipe = false;
                         }
                     }
                     @Override
@@ -8037,5 +8044,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (mKeyguardDelegate != null) {
             mKeyguardDelegate.dump(prefix, pw);
         }
+    }
+
+    @Override
+    public void setLiveLockscreenEdgeDetector(boolean enable) {
+        mShowKeyguardOnLeftSwipe = enable;
     }
 }
