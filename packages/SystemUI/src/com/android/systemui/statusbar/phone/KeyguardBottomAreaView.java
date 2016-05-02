@@ -217,6 +217,8 @@ public class KeyguardBottomAreaView extends FrameLayout implements View.OnClickL
         mWindowLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        mWindowLayoutParams.privateFlags =
+                WindowManager.LayoutParams.PRIVATE_FLAG_NO_MOVE_ANIMATION;
         mWindowLayoutParams.width = WindowManager.LayoutParams.MATCH_PARENT;
         mWindowLayoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
         mWindowLayoutParams.format = PixelFormat.TRANSPARENT;
@@ -566,7 +568,8 @@ public class KeyguardBottomAreaView extends FrameLayout implements View.OnClickL
 
     public void launchCamera(String source) {
         final Intent intent;
-        if (!mShortcutHelper.isTargetCustom(LockscreenShortcutsHelper.Shortcuts.RIGHT_SHORTCUT)) {
+        if (source.equals(CAMERA_LAUNCH_SOURCE_POWER_DOUBLE_TAP) || !mShortcutHelper
+                .isTargetCustom(LockscreenShortcutsHelper.Shortcuts.RIGHT_SHORTCUT)) {
             intent = getCameraIntent();
         } else {
             intent = mShortcutHelper.getIntent(LockscreenShortcutsHelper.Shortcuts.RIGHT_SHORTCUT);
@@ -894,6 +897,18 @@ public class KeyguardBottomAreaView extends FrameLayout implements View.OnClickL
     @Override
     public void onChange() {
         updateCustomShortcuts();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (mAccessibilityController != null) {
+            mAccessibilityController.addStateChangedCallback(this);
+        }
+        mShortcutHelper.registerAndFetchTargets();
+        updateCustomShortcuts();
+        mUnlockMethodCache.addListener(this);
+        watchForCameraPolicyChanges();
     }
 
     @Override
