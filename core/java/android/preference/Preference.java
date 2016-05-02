@@ -22,14 +22,19 @@ import com.android.internal.util.CharSequences;
 import android.annotation.DrawableRes;
 import android.annotation.LayoutRes;
 import android.annotation.StringRes;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
+import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.AbsSavedState;
@@ -41,6 +46,9 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.android.internal.R;
+
+import java.lang.Integer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -82,12 +90,32 @@ import java.util.Set;
  * @attr ref android.R.styleable#Preference_shouldDisableView
  */
 public class Preference implements Comparable<Preference> {
+
+    private static final String TAG = "Preference";
     /**
      * Specify for {@link #setOrder(int)} if a specific order is not required.
      */
     public static final int DEFAULT_ORDER = Integer.MAX_VALUE;
 
+    /**
+     * Text styles.
+     */
+    private static final int PREF_TEXT_TYPE_NORMAL = 0;
+    private static final int PREF_TEXT_TYPE_BOLD = 1;
+    private static final int PREF_TEXT_TYPE_ITALIC = 2;
+    private static final int PREF_TEXT_TYPE_BOLD_ITALIC = 3;
+
+    private int mPrefTextStyle = PREF_TEXT_TYPE_NORMAL;
+
+    private boolean mUiMode;
+    private boolean mStyleReset;
+    private int mCurrentColor;
+    private int mDefaultColor;
+    private int mIntColor;
+    private TextView mTitleView;
+
     private Context mContext;
+    private ContentResolver mResolver;
     private PreferenceManager mPreferenceManager;
     
     /**
@@ -514,7 +542,32 @@ public class Preference implements Comparable<Preference> {
         final LayoutInflater layoutInflater =
             (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         
-        final View layout = layoutInflater.inflate(mLayoutResId, parent, false); 
+        final View layout = layoutInflater.inflate(mLayoutResId, parent, false);
+
+        mResolver = mContext.getContentResolver();
+
+        mUiMode = Settings.System.getInt(mResolver,
+                Settings.Secure.ACCESSIBILITY_DISPLAY_INVERSION_ENABLED, 0) == 1;
+        mIntColor = Settings.System.getInt(mResolver,
+                Settings.System.SYSTEM_PREF_TEXT_COLOR, -2);
+        mPrefTextStyle = Settings.System.getInt(mResolver,
+                Settings.System.SYSTEM_PREF_TEXT_STYLE, PREF_TEXT_TYPE_NORMAL);
+        mStyleReset = Settings.System.getInt(mResolver,
+                Settings.System.SYSTEM_PREF_RESET, 0) == 1;
+
+        if (mUiMode) {
+            mDefaultColor = mContext.getResources().getColor(com.android.internal.R.color.primary_text_default_material_light);
+        } else {
+            mDefaultColor = mContext.getResources().getColor(com.android.internal.R.color.primary_text_default_material_dark);
+        }
+        if (isMinValue(mIntColor) || mStyleReset) {
+            // flag to reset the color
+            mIntColor = mDefaultColor;
+            if (mStyleReset) {
+               // flag to reset the style
+               mPrefTextStyle = PREF_TEXT_TYPE_NORMAL;
+            } 
+        }
         
         final ViewGroup widgetFrame = (ViewGroup) layout
                 .findViewById(com.android.internal.R.id.widget_frame);
@@ -526,6 +579,10 @@ public class Preference implements Comparable<Preference> {
             }
         }
         return layout;
+    }
+
+    private boolean isMinValue(int i) {
+        return (i == Integer.MIN_VALUE);
     }
     
     /**
@@ -541,14 +598,27 @@ public class Preference implements Comparable<Preference> {
      */
     @CallSuper
     protected void onBindView(View view) {
-        final TextView titleView = (TextView) view.findViewById(com.android.internal.R.id.title);
-        if (titleView != null) {
+        mTitleView = (TextView) view.findViewById(com.android.internal.R.id.title);
+        
+        if (mTitleView != null) {
             final CharSequence title = getTitle();
             if (!TextUtils.isEmpty(title)) {
-                titleView.setText(title);
-                titleView.setVisibility(View.VISIBLE);
+                mTitleView.setText(title);
+                mTitleView.setVisibility(View.VISIBLE);
+                mTitleView.setTextColor(mIntColor);
+                if (mPrefTextStyle != PREF_TEXT_TYPE_NORMAL) {
+                    if (mPrefTextStyle == PREF_TEXT_TYPE_BOLD) {
+                        mTitleView.setTypeface(null, Typeface.BOLD);
+                    } else if (mPrefTextStyle == PREF_TEXT_TYPE_ITALIC) {
+                        mTitleView.setTypeface(null, Typeface.ITALIC);
+                    } else if (mPrefTextStyle == PREF_TEXT_TYPE_BOLD_ITALIC) {
+                        mTitleView.setTypeface(null, Typeface.BOLD_ITALIC);
+                    }
+                } else {
+                mTitleView.setTypeface(null, Typeface.NORMAL);
+                }
             } else {
-                titleView.setVisibility(View.GONE);
+                mTitleView.setVisibility(View.GONE);
             }
         }
 
@@ -1877,5 +1947,4 @@ public class Preference implements Comparable<Preference> {
             }
         };
     }
-
 }

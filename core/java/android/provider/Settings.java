@@ -1735,6 +1735,50 @@ public final class Settings {
         }
 
         /**
+         * @hide
+         * Convenience function for retrieving a single system settings value
+         * as a boolean.  Note that internally setting values are always
+         * stored as strings; this function converts the string to a boolean
+         * for you. It will only return true if the stored value is "1"
+         *
+         * @param cr The ContentResolver to access.
+         * @param name The name of the setting to retrieve.
+         * @param def Value to return if the setting is not defined.
+         *
+         * @return The setting's current value, or 'def' if it is not defined
+         * or not a valid integer.
+         */
+        public static boolean getBoolean(ContentResolver cr, String name, boolean def) {
+            String v = getString(cr, name);
+            try {
+                if(v != null)
+                    return "1".equals(v);
+                else
+                    return def;
+            } catch (NumberFormatException e) {
+                return def;
+            }
+        }
+
+        /**
+         * @hide
+         * Convenience function for updating a single settings value as a
+         * boolean. This will either create a new entry in the table if the
+         * given name does not exist, or modify the value of the existing row
+         * with that name.  Note that internally setting values are always
+         * stored as strings, so this function converts the given value to a
+         * string (1 or 0) before storing it.
+         * 
+         * @param cr The ContentResolver to access.
+         * @param name The name of the setting to modify.
+         * @param value The new value for the setting.
+         * @return true if the value was set, false on database errors
+         */
+        public static boolean putBoolean(ContentResolver cr, String name, boolean value) {
+            return putString(cr, name, value ? "1" : "0");
+        }
+
+        /**
          * Convenience function for retrieving a single system settings value
          * as an integer.  Note that internally setting values are always
          * stored as strings; this function converts the string to an integer
@@ -3546,10 +3590,37 @@ public final class Settings {
 
         /**
          * Allow setting default launcher
-         *
          * @hide
          */
         public static final String SET_DEFAULT_LAUNCHER = "set_default_launcher";
+
+        /**
+         * Has preference style changed?
+         * @hide
+         */
+        public static final String SYSTEM_PREF_STYLE_CHANGED = "pref_changed";
+
+        /**
+         * Resets text styles to default
+         * @hide
+         */
+        public static final String SYSTEM_PREF_RESET = "pref_reset";
+
+        /**
+         * Setting for primary text color
+         * @hide
+         */
+        public static final String SYSTEM_PREF_TEXT_COLOR = "pref_text_color";
+
+        /**
+         * @hide
+         * Sets the system preference title style
+         * 0 - Normal
+         * 1 - Bold
+         * 2 - Italic
+         * 3 - Bold Italic
+         */
+        public static final String SYSTEM_PREF_TEXT_STYLE = "pref_text_style";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
