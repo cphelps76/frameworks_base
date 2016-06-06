@@ -102,10 +102,10 @@ public class LiveLockScreenController {
                 }
             }
         } else {
-            if (isShowingLiveLockScreenView()) {
+            if (isShowingLiveLockScreenView() && !mBar.isKeyguardInputRestricted()) {
                 mPanelView.removeView(mLiveLockScreenView);
-                mLlsHasFocus = false;
             }
+            mLlsHasFocus = false;
         }
     }
 
@@ -167,7 +167,6 @@ public class LiveLockScreenController {
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mBar.showKeyguard();
                         mBar.startActivityDismissingKeyguard(intent, false, true, true,
                                 null);
                     }

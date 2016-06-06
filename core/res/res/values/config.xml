@@ -2569,4 +2569,7 @@
 
     <!-- If this is true, key chords can be used to take a screen record on the device. -->
     <bool name="config_enableScreenrecordChord">true</bool>
+
+    <!-- Whether to persist the notification for when a usb drive device is plugged in -->
+    <bool name="config_persistUsbDriveNotification">false</bool>
 </resources>
