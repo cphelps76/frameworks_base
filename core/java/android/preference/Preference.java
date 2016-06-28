@@ -109,7 +109,6 @@ public class Preference implements Comparable<Preference> {
 
     private boolean mUiMode;
     private boolean mStyleReset;
-    private int mCurrentColor;
     private int mDefaultColor;
     private int mIntColor;
     private TextView mTitleView;
@@ -546,28 +545,12 @@ public class Preference implements Comparable<Preference> {
 
         mResolver = mContext.getContentResolver();
 
-        mUiMode = Settings.System.getInt(mResolver,
-                Settings.Secure.ACCESSIBILITY_DISPLAY_INVERSION_ENABLED, 0) == 1;
         mIntColor = Settings.System.getInt(mResolver,
                 Settings.System.SYSTEM_PREF_TEXT_COLOR, -2);
         mPrefTextStyle = Settings.System.getInt(mResolver,
                 Settings.System.SYSTEM_PREF_TEXT_STYLE, PREF_TEXT_TYPE_NORMAL);
         mStyleReset = Settings.System.getInt(mResolver,
                 Settings.System.SYSTEM_PREF_RESET, 0) == 1;
-
-        if (mUiMode) {
-            mDefaultColor = mContext.getResources().getColor(com.android.internal.R.color.primary_text_default_material_light);
-        } else {
-            mDefaultColor = mContext.getResources().getColor(com.android.internal.R.color.primary_text_default_material_dark);
-        }
-        if (isMinValue(mIntColor) || mStyleReset) {
-            // flag to reset the color
-            mIntColor = mDefaultColor;
-            if (mStyleReset) {
-               // flag to reset the style
-               mPrefTextStyle = PREF_TEXT_TYPE_NORMAL;
-            } 
-        }
         
         final ViewGroup widgetFrame = (ViewGroup) layout
                 .findViewById(com.android.internal.R.id.widget_frame);
@@ -579,10 +562,6 @@ public class Preference implements Comparable<Preference> {
             }
         }
         return layout;
-    }
-
-    private boolean isMinValue(int i) {
-        return (i == Integer.MIN_VALUE);
     }
     
     /**
@@ -599,23 +578,28 @@ public class Preference implements Comparable<Preference> {
     @CallSuper
     protected void onBindView(View view) {
         mTitleView = (TextView) view.findViewById(com.android.internal.R.id.title);
-        
         if (mTitleView != null) {
             final CharSequence title = getTitle();
+            boolean customTextEnabled = Settings.System.getInt(mResolver,
+                    Settings.System.CUSTOM_TEXT_STYLE_ENABLED, 0) != 0;
             if (!TextUtils.isEmpty(title)) {
                 mTitleView.setText(title);
                 mTitleView.setVisibility(View.VISIBLE);
-                mTitleView.setTextColor(mIntColor);
-                if (mPrefTextStyle != PREF_TEXT_TYPE_NORMAL) {
-                    if (mPrefTextStyle == PREF_TEXT_TYPE_BOLD) {
-                        mTitleView.setTypeface(null, Typeface.BOLD);
-                    } else if (mPrefTextStyle == PREF_TEXT_TYPE_ITALIC) {
-                        mTitleView.setTypeface(null, Typeface.ITALIC);
-                    } else if (mPrefTextStyle == PREF_TEXT_TYPE_BOLD_ITALIC) {
-                        mTitleView.setTypeface(null, Typeface.BOLD_ITALIC);
+                if (customTextEnabled && !mStyleReset) {
+                    mTitleView.setTextColor(mIntColor);
+                }
+                if (customTextEnabled) {
+                    if (mPrefTextStyle != PREF_TEXT_TYPE_NORMAL) {
+                        if (mPrefTextStyle == PREF_TEXT_TYPE_BOLD) {
+                            mTitleView.setTypeface(null, Typeface.BOLD);
+                        } else if (mPrefTextStyle == PREF_TEXT_TYPE_ITALIC) {
+                            mTitleView.setTypeface(null, Typeface.ITALIC);
+                        } else if (mPrefTextStyle == PREF_TEXT_TYPE_BOLD_ITALIC) {
+                            mTitleView.setTypeface(null, Typeface.BOLD_ITALIC);
+                        }
+                    } else {
+                    mTitleView.setTypeface(null, Typeface.NORMAL);
                     }
-                } else {
-                mTitleView.setTypeface(null, Typeface.NORMAL);
                 }
             } else {
                 mTitleView.setVisibility(View.GONE);

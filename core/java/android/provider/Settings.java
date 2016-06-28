@@ -3594,6 +3594,12 @@ public final class Settings {
         public static final String SET_DEFAULT_LAUNCHER = "set_default_launcher";
 
         /**
+         * Enable custom text styles
+         * @hide
+         */
+        public static final String CUSTOM_TEXT_STYLE_ENABLED = "pref_enabled";
+
+        /**
          * Has preference style changed?
          * @hide
          */
