@@ -174,6 +174,7 @@
   <string name="dynamic_qs_tile_next_alarm_label">Próximo alarme</string>
   <string name="dynamic_qs_tile_ime_selector_label">Seletor de IME</string>
   <string name="dynamic_qs_tile_su_label">Acesso super usuário</string>
+  <string name="dynamic_qs_tile_themes_label">Temas</string>
   <string name="quick_settings_title_advanced_location">Localização em 3 estados</string>
   <!-- Content description of the location tile in quick settings when on, battery saving mode (not shown on the screen). [CHAR LIMIT=NONE] -->
   <string name="accessibility_quick_settings_location_battery_saving">Relatório de localização: modo economia de bateria.</string>
@@ -219,4 +220,7 @@
   <!-- Path data for circle battery -->
   <!-- Weather string format in keyguard -->
   <string name="keyguard_status_view_weather_format"><xliff:g id="tempo">%1$s</xliff:g> - <xliff:g id="condição">%2$s</xliff:g></string>
+  <string name="expand_hint">Deslize para baixo para expandir</string>
+  <string name="swipe_left_hint">Deslizar para a esquerda para <xliff:g id="app_name">%1$s</xliff:g></string>
+  <string name="swipe_right_hint">Deslize para a direita para ver as notificações</string>
 </resources>

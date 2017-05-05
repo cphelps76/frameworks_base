@@ -22,8 +22,6 @@ import android.app.ActivityManagerInternal.SleepToken;
 import android.app.ActivityManagerNative;
 import android.app.AppOpsManager;
 import android.app.IUiModeManager;
-import android.app.KeyguardManager;
-import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.app.StatusBarManager;
 import android.app.UiModeManager;
@@ -37,6 +35,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.CompatibilityInfo;
@@ -137,6 +136,8 @@ import com.android.server.GestureLauncherService;
 import com.android.server.LocalServices;
 import com.android.server.policy.keyguard.KeyguardServiceDelegate;
 import com.android.server.policy.keyguard.KeyguardServiceDelegate.DrawnListener;
+
+import org.cyanogenmod.internal.BootDexoptDialog;
 
 import java.io.File;
 import java.io.FileReader;
@@ -496,7 +497,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // During wakeup by volume keys, we still need to capture subsequent events
     // until the key is released. This is required since the beep sound is produced
     // post keypressed.
-    boolean mVolumeWakeTriggered;
+    boolean mVolumeDownWakeTriggered;
+    boolean mVolumeUpWakeTriggered;
+    boolean mVolumeMuteWakeTriggered;
 
     int mPointerLocationMode = 0; // guarded by mLock
 
@@ -1804,13 +1807,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                                 mNavigationBarLeftInLandscape) {
                             requestTransientBars(mNavigationBar);
                         }
-                        boolean focusedWindowIsExternalKeyguard = false;
-                        if (mFocusedWindow != null) {
-                            focusedWindowIsExternalKeyguard = (mFocusedWindow.getAttrs().type
-                                    & WindowManager.LayoutParams.TYPE_KEYGUARD_PANEL) != 0;
-                        }
                         if (mShowKeyguardOnLeftSwipe && isKeyguardShowingOrOccluded()
-                                && focusedWindowIsExternalKeyguard) {
+                                && mKeyguardDelegate.isKeyguardPanelFocused()) {
                             // Show keyguard
                             mKeyguardDelegate.showKeyguard();
                         }
@@ -2491,6 +2489,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 && (attrs.flags & FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS) != 0) {
             attrs.subtreeSystemUiVisibility |= View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+        }
+
+        if ((attrs.privateFlags & (WindowManager.LayoutParams.PRIVATE_FLAG_PREVENT_SYSTEM_KEYS |
+                            WindowManager.LayoutParams.PRIVATE_FLAG_PREVENT_POWER_KEY)) != 0) {
+            mContext.enforceCallingOrSelfPermission(android.Manifest.permission.PREVENT_SYSTEM_KEYS,
+                    "No permission to prevent system key");
         }
     }
 
@@ -5102,7 +5106,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if ((attrs.privateFlags & PRIVATE_FLAG_FORCE_STATUS_BAR_VISIBLE_TRANSPARENT) != 0) {
                 mForceStatusBarTransparent = true;
             }
-        }
+        } else if (attrs.type == TYPE_KEYGUARD_PANEL) {
+            if (mKeyguardDelegate.isKeyguardPanelFocused()) {
+                attrs.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+                attrs.flags |= WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
+            } else {
+                attrs.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+                attrs.flags &= ~WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
+            }
+       }
 
         boolean appWindow = attrs.type >= FIRST_APPLICATION_WINDOW
                 && attrs.type < FIRST_SYSTEM_WINDOW;
@@ -5668,6 +5680,36 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    private void setVolumeWakeTriggered(final int keyCode, boolean triggered) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                mVolumeDownWakeTriggered = triggered;
+                break;
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                mVolumeUpWakeTriggered = triggered;
+                break;
+            case KeyEvent.KEYCODE_VOLUME_MUTE:
+                mVolumeMuteWakeTriggered = triggered;
+                break;
+            default:
+                Log.w(TAG, "setVolumeWakeTriggered: unexpected keyCode=" + keyCode);
+        }
+    }
+
+    private boolean getVolumeWakeTriggered(final int keyCode) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                return mVolumeDownWakeTriggered;
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                return mVolumeUpWakeTriggered;
+            case KeyEvent.KEYCODE_VOLUME_MUTE:
+                return mVolumeMuteWakeTriggered;
+            default:
+                Log.w(TAG, "getVolumeWakeTriggered: unexpected keyCode=" + keyCode);
+                return false;
+        }
+    }
+
     /** {@inheritDoc} */
     @Override
     public int interceptKeyBeforeQueueing(KeyEvent event, int policyFlags) {
@@ -5763,11 +5805,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 // Eat all down & up keys when using volume wake.
                 // This disables volume control, music control, and "beep" on key up.
                 if (isWakeKey && mVolumeWakeScreen) {
-                    mVolumeWakeTriggered = true;
+                    setVolumeWakeTriggered(keyCode, true);
                     break;
-                } else if (mVolumeWakeTriggered && !down) {
+                } else if (getVolumeWakeTriggered(keyCode) && !down) {
                     result &= ~ACTION_PASS_TO_USER;
-                    mVolumeWakeTriggered = false;
+                    setVolumeWakeTriggered(keyCode, false);
                     break;
                 }
 
@@ -7114,68 +7156,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         screenTurnedOn();
     }
 
-    ProgressDialog mBootMsgDialog = null;
+    BootDexoptDialog mBootMsgDialog = null;
 
     /** {@inheritDoc} */
     @Override
-    public void showBootMessage(final CharSequence msg, final boolean always) {
+    public void updateBootProgress(final int stage, final ApplicationInfo optimizedApp,
+            final int currentAppPos, final int totalAppCount) {
         mHandler.post(new Runnable() {
             @Override public void run() {
                 if (mBootMsgDialog == null) {
-                    int theme;
-                    if (mContext.getPackageManager().hasSystemFeature(
-                            PackageManager.FEATURE_WATCH)) {
-                        theme = com.android.internal.R.style.Theme_Micro_Dialog_Alert;
-                    } else if (mContext.getPackageManager().hasSystemFeature(
-                            PackageManager.FEATURE_TELEVISION)) {
-                        theme = com.android.internal.R.style.Theme_Leanback_Dialog_Alert;
-                    } else {
-                        theme = 0;
-                    }
-
-                    mBootMsgDialog = new ProgressDialog(mContext, theme) {
-                        // This dialog will consume all events coming in to
-                        // it, to avoid it trying to do things too early in boot.
-                        @Override public boolean dispatchKeyEvent(KeyEvent event) {
-                            return true;
-                        }
-                        @Override public boolean dispatchKeyShortcutEvent(KeyEvent event) {
-                            return true;
-                        }
-                        @Override public boolean dispatchTouchEvent(MotionEvent ev) {
-                            return true;
-                        }
-                        @Override public boolean dispatchTrackballEvent(MotionEvent ev) {
-                            return true;
-                        }
-                        @Override public boolean dispatchGenericMotionEvent(MotionEvent ev) {
-                            return true;
-                        }
-                        @Override public boolean dispatchPopulateAccessibilityEvent(
-                                AccessibilityEvent event) {
-                            return true;
-                        }
-                    };
-                    if (mContext.getPackageManager().isUpgrade()) {
-                        mBootMsgDialog.setTitle(R.string.android_upgrading_title);
-                    } else {
-                        mBootMsgDialog.setTitle(R.string.android_start_title);
-                    }
-                    mBootMsgDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-                    mBootMsgDialog.setIndeterminate(true);
-                    mBootMsgDialog.getWindow().setType(
-                            WindowManager.LayoutParams.TYPE_BOOT_PROGRESS);
-                    mBootMsgDialog.getWindow().addFlags(
-                            WindowManager.LayoutParams.FLAG_DIM_BEHIND
-                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN);
-                    mBootMsgDialog.getWindow().setDimAmount(1);
-                    WindowManager.LayoutParams lp = mBootMsgDialog.getWindow().getAttributes();
-                    lp.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_NOSENSOR;
-                    mBootMsgDialog.getWindow().setAttributes(lp);
-                    mBootMsgDialog.setCancelable(false);
-                    mBootMsgDialog.show();
+                    mBootMsgDialog = BootDexoptDialog.create(mContext);
                 }
-                mBootMsgDialog.setMessage(msg);
+                mBootMsgDialog.setProgress(stage, optimizedApp, currentAppPos, totalAppCount);
             }
         });
     }

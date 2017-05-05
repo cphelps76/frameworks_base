@@ -44,6 +44,7 @@ import android.app.ApplicationThreadNative;
 import android.app.BroadcastOptions;
 import android.app.IActivityContainer;
 import android.app.IActivityContainerCallback;
+import android.app.IActivityManager;
 import android.app.IAppTask;
 import android.app.ITaskStackListener;
 import android.app.ProfilerInfo;
@@ -218,6 +219,7 @@ import android.os.UpdateLock;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.telecom.TelecomManager;
 import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.AtomicFile;
@@ -1028,6 +1030,7 @@ public final class ActivityManagerService extends ActivityManagerNative
      * For example, references to the commonly used services.
      */
     HashMap<String, IBinder> mAppBindArgs;
+    HashMap<String, IBinder> mIsolatedAppBindArgs;
 
     /**
      * Temporary to avoid allocations.  Protected by main lock.
@@ -2829,18 +2832,24 @@ public final class ActivityManagerService extends ActivityManagerNative
      * lazily setup to make sure the services are running when they're asked for.
      */
     private HashMap<String, IBinder> getCommonServicesLocked(boolean isolated) {
+        // Isolated processes won't get this optimization, so that we don't
+        // violate the rules about which services they have access to.
+        if (isolated) {
+            if (mIsolatedAppBindArgs == null) {
+                mIsolatedAppBindArgs = new HashMap<>();
+                mIsolatedAppBindArgs.put("package", ServiceManager.getService("package"));
+            }
+            return mIsolatedAppBindArgs;
+        }
+
         if (mAppBindArgs == null) {
             mAppBindArgs = new HashMap<>();
 
-            // Isolated processes won't get this optimization, so that we don't
-            // violate the rules about which services they have access to.
-            if (!isolated) {
-                // Setup the application init args
-                mAppBindArgs.put("package", ServiceManager.getService("package"));
-                mAppBindArgs.put("window", ServiceManager.getService("window"));
-                mAppBindArgs.put(Context.ALARM_SERVICE,
-                        ServiceManager.getService(Context.ALARM_SERVICE));
-            }
+            // Setup the application init args
+            mAppBindArgs.put("package", ServiceManager.getService("package"));
+            mAppBindArgs.put("window", ServiceManager.getService("window"));
+            mAppBindArgs.put(Context.ALARM_SERVICE,
+                    ServiceManager.getService(Context.ALARM_SERVICE));
         }
         return mAppBindArgs;
     }
@@ -3648,6 +3657,18 @@ public final class ActivityManagerService extends ActivityManagerNative
             app.killed = false;
             app.killedByAm = false;
             checkTime(startTime, "startProcess: starting to update pids map");
+            ProcessRecord oldApp;
+            synchronized (mPidsSelfLocked) {
+                oldApp = mPidsSelfLocked.get(startResult.pid);
+            }
+            // If there is already an app occupying that pid that hasn't been cleaned up
+            if (oldApp != null && !app.isolated) {
+                // Clean up anything relating to this pid first
+                Slog.w(TAG, "Reusing pid " + startResult.pid
+                        + " while app is still mapped to it");
+                cleanUpApplicationRecordLocked(oldApp, false, false, -1,
+                        true /*replacingPid*/);
+            }
             synchronized (mPidsSelfLocked) {
                 this.mPidsSelfLocked.put(startResult.pid, app);
                 if (isActivityProcess) {
@@ -4802,7 +4823,8 @@ public final class ActivityManagerService extends ActivityManagerNative
     private final void handleAppDiedLocked(ProcessRecord app,
             boolean restarting, boolean allowRestart) {
         int pid = app.pid;
-        boolean kept = cleanUpApplicationRecordLocked(app, restarting, allowRestart, -1);
+        boolean kept = cleanUpApplicationRecordLocked(app, restarting, allowRestart, -1,
+                false /*replacingPid*/);
         if (!kept && !restarting) {
             removeLruProcessLocked(app);
             if (pid > 0) {
@@ -6557,12 +6579,14 @@ public final class ActivityManagerService extends ActivityManagerNative
     }
 
     @Override
-    public void showBootMessage(final CharSequence msg, final boolean always) {
+    public void updateBootProgress(final int stage, final ApplicationInfo optimizedApp,
+            final int currentAppPos, final int totalAppCount, final boolean always) {
         if (Binder.getCallingUid() != Process.myUid()) {
             // These days only the core system can call this, so apps can't get in
             // the way of what we show about running them.
         }
-        mWindowManager.showBootMessage(msg, always);
+        mWindowManager.updateBootProgress(stage, optimizedApp,
+                currentAppPos, totalAppCount, always);
     }
 
     @Override
@@ -9496,6 +9520,10 @@ public final class ActivityManagerService extends ActivityManagerNative
                 mStackSupervisor.setLockTaskModeLocked(null, ActivityManager.LOCK_TASK_MODE_NONE,
                         "stopLockTask", true);
             }
+            TelecomManager tm = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
+            if (tm != null) {
+                tm.showInCallScreen(false);
+            }
         } finally {
             Binder.restoreCallingIdentity(ident);
         }
@@ -11980,8 +12008,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                 intent.setComponent(comp);
                 doneReceivers.add(comp);
                 lastRi = curRi;
-                CharSequence label = ai.loadLabel(mContext.getPackageManager());
-                showBootMessage(mContext.getString(R.string.android_preparing_apk, label), false);
+                updateBootProgress(IActivityManager.BOOT_STAGE_PREPARING_APPS,
+                        ai.applicationInfo, 0, 0, false);
             }
             Slog.i(TAG, "Pre-boot of " + intent.getComponent().toShortString()
                     + " for user " + users[curUser]);
@@ -12104,9 +12132,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                         synchronized (ActivityManagerService.this) {
                             mDidUpdate = true;
                         }
-                        showBootMessage(mContext.getText(
-                                R.string.android_upgrading_complete),
-                                false);
+                        updateBootProgress(IActivityManager.BOOT_STAGE_COMPLETE,
+                                null, 0, 0, false);
                         writeLastDonePreBootReceivers(doneReceivers);
                         systemReady(goingCallback);
                     }
@@ -15896,7 +15923,8 @@ public final class ActivityManagerService extends ActivityManagerNative
      * app that was passed in must remain on the process lists.
      */
     private final boolean cleanUpApplicationRecordLocked(ProcessRecord app,
-            boolean restarting, boolean allowRestart, int index) {
+            boolean restarting, boolean allowRestart, int index, boolean replacingPid) {
+        Slog.d(TAG, "cleanUpApplicationRecord -- " + app.pid);
         if (index >= 0) {
             removeLruProcessLocked(app);
             ProcessList.remove(app.pid);
@@ -16026,7 +16054,9 @@ public final class ActivityManagerService extends ActivityManagerNative
         if (!app.persistent || app.isolated) {
             if (DEBUG_PROCESSES || DEBUG_CLEANUP) Slog.v(TAG_CLEANUP,
                     "Removing non-persistent process during cleanup: " + app);
-            removeProcessNameLocked(app.processName, app.uid);
+            if (!replacingPid) {
+                removeProcessNameLocked(app.processName, app.uid);
+            }
             if (mHeavyWeightProcess == app) {
                 mHandler.sendMessage(mHandler.obtainMessage(CANCEL_HEAVY_NOTIFICATION_MSG,
                         mHeavyWeightProcess.userId, 0));
@@ -16433,10 +16463,21 @@ public final class ActivityManagerService extends ActivityManagerNative
     // Cause the target app to be launched if necessary and its backup agent
     // instantiated.  The backup agent will invoke backupAgentCreated() on the
     // activity manager to announce its creation.
-    public boolean bindBackupAgent(ApplicationInfo app, int backupMode) {
-        if (DEBUG_BACKUP) Slog.v(TAG_BACKUP,
-                "bindBackupAgent: app=" + app + " mode=" + backupMode);
+    public boolean bindBackupAgent(String packageName, int backupMode, int userId) {
+        if (DEBUG_BACKUP) Slog.v(TAG, "bindBackupAgent: app=" + packageName + " mode=" + backupMode);
         enforceCallingPermission("android.permission.CONFIRM_FULL_BACKUP", "bindBackupAgent");
+
+        IPackageManager pm = AppGlobals.getPackageManager();
+        ApplicationInfo app = null;
+        try {
+            app = pm.getApplicationInfo(packageName, 0, userId);
+        } catch (RemoteException e) {
+            // can't happen; package manager is process-local
+        }
+        if (app == null) {
+            Slog.w(TAG, "Unable to bind backup agent for " + packageName);
+            return false;
+        }
 
         synchronized(this) {
             // !!! TODO: currently no check here that we're already bound
@@ -16962,7 +17003,8 @@ public final class ActivityManagerService extends ActivityManagerNative
         } else if (callerApp == null || !callerApp.persistent) {
             try {
                 if (AppGlobals.getPackageManager().isProtectedBroadcast(
-                        intent.getAction())) {
+                        intent.getAction()) && !AppGlobals.getPackageManager()
+                        .isProtectedBroadcastAllowed(intent.getAction(), callingUid)) {
                     String msg = "Permission Denial: not allowed to send broadcast "
                             + intent.getAction() + " from pid="
                             + callingPid + ", uid=" + callingUid;
@@ -17805,6 +17847,11 @@ public final class ActivityManagerService extends ActivityManagerNative
                 if (values.themeConfig != null) {
                     saveThemeResourceLocked(values.themeConfig,
                             !values.themeConfig.equals(mConfiguration.themeConfig));
+                }
+
+                if ((changes & ActivityInfo.CONFIG_THEME_FONT) != 0) {
+                    // Notify zygote that themes need a refresh
+                    SystemProperties.set(PROP_REFRESH_THEME, "1");
                 }
 
                 mConfigurationSeq++;
@@ -19977,7 +20024,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                             // Ignore exceptions.
                         }
                     }
-                    cleanUpApplicationRecordLocked(app, false, true, -1);
+                    cleanUpApplicationRecordLocked(app, false, true, -1, false /*replacingPid*/);
                     mRemovedProcesses.remove(i);
 
                     if (app.persistent) {
